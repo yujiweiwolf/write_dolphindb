@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.19)
 project(write_dolphindb)
 
 #Release Debug
-set(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_BUILD_TYPE "Debug")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -Wall")
 add_compile_options(-std=c++17 -Wall -O2)
 #add_definitions(-DLOGGING_LEVEL_2 -DLINUX -D_GLIBCXX_USE_CXX11_ABI=0)
@@ -31,11 +31,25 @@ endforeach()
 include_directories(${CMAKE_CURRENT_LIST_DIR}/lib/dolphindb/include lib/openssl-1.0.2u/include ${all_include})
 link_directories(${CMAKE_CURRENT_LIST_DIR}/lib/dolphindb/lib lib/openssl-1.0.2u  ${all_lib})
 
-set(DOLPHINDB_TEST "dolphindb_test")
+set(TEST_KNOCK "test_knock")
+set(TEST_FEEDER "test_feeder")
+set(TEST_ORDER "test_order")
+set(TEST_QKNOCK "test_qknock")
 
-# test_dolphindb
-add_executable(${DOLPHINDB_TEST} src/test_dolphindb/test_dolphidb.cc)
-target_link_libraries(${DOLPHINDB_TEST}
+add_executable(${TEST_KNOCK} src/test_dolphindb/test_knock.cc)
+target_link_libraries(${TEST_KNOCK}
+        libDolphinDBAPI.so broker coral swordfish x stdc++fs yaml-cpp  clickhouse-cpp-lib-static boost_date_time boost_filesystem boost_regex boost_system  boost_chrono boost_log boost_program_options boost_thread boost_iostreams z protobuf protobuf-lite sodium zmq ssl crypto iconv pthread dl)
+
+add_executable(${TEST_FEEDER} src/test_dolphindb/test_feeder.cc)
+target_link_libraries(${TEST_FEEDER}
+        libDolphinDBAPI.so broker coral swordfish x stdc++fs yaml-cpp  clickhouse-cpp-lib-static boost_date_time boost_filesystem boost_regex boost_system  boost_chrono boost_log boost_program_options boost_thread boost_iostreams z protobuf protobuf-lite sodium zmq ssl crypto iconv pthread dl)
+
+add_executable(${TEST_ORDER} src/test_dolphindb/test_order.cc)
+target_link_libraries(${TEST_ORDER}
+        libDolphinDBAPI.so broker coral swordfish x stdc++fs yaml-cpp  clickhouse-cpp-lib-static boost_date_time boost_filesystem boost_regex boost_system  boost_chrono boost_log boost_program_options boost_thread boost_iostreams z protobuf protobuf-lite sodium zmq ssl crypto iconv pthread dl)
+
+add_executable(${TEST_QKNOCK} src/test_dolphindb/test_qknock.cc)
+target_link_libraries(${TEST_QKNOCK}
         libDolphinDBAPI.so broker coral swordfish x stdc++fs yaml-cpp  clickhouse-cpp-lib-static boost_date_time boost_filesystem boost_regex boost_system  boost_chrono boost_log boost_program_options boost_thread boost_iostreams z protobuf protobuf-lite sodium zmq ssl crypto iconv pthread dl)
 
 
