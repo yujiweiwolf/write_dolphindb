@@ -311,6 +311,7 @@ int main(int argc, char *argv[]) {
         script += "db = database(dbPath,COMPO,[db1,db2],engine=\"TSDB\");";
         script += "date = db.createPartitionedTable(mt,tableName, partitionColumns=`tick_date`code,sortColumns=`code`tick_date`tick_time,keepDuplicates=FIRST);";
         script += "tradTable=database(dbPath).loadTable(tableName).append!(mt);";
+        LOG_INFO << script;
         TableSP result = conn.run(script);
         all_tick.erase(all_tick.begin());
     }

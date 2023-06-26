@@ -5,6 +5,7 @@
 #include <string>
 #include <sys/time.h>
 #include "BatchTableWriter.h"
+#include "MultithreadedTableWriter.h"
 
 #include <iostream>
 #include <boost/program_options.hpp>
@@ -25,7 +26,7 @@ TableSP createDemoTable(co::fbs::TradeKnockT knock) {
                                   DT_LONG,DT_STRING,DT_STRING,DT_STRING,DT_LONG,DT_LONG,DT_LONG,
                                   DT_LONG,DT_DOUBLE,DT_DOUBLE,DT_STRING,DT_LONG};
     int colNum = 21, rowNum = 1;
-    ConstantSP table = Util::createTable(colNames, colTypes, rowNum, 100);
+    ConstantSP table = Util::createTable(colNames, colTypes, rowNum, 1);
     vector<VectorSP> columnVecs;
     columnVecs.reserve(colNum);
     for (int i = 0;i < colNum;i++)
@@ -146,11 +147,11 @@ int main(int argc, char *argv[]) {
         return -1;
     }
     cout << "Please waiting..." << endl;
-    string script;
-    script += "existsTable(\"" + dbPath + "\", `" + tableName + ");";
-    TableSP result = conn.run(script);
-    cout << "existsTable: " << result->getString() << endl;
-    if (result->getString().compare("0") == 0) {
+//    string script;
+//    script += "existsTable(\"" + dbPath + "\", `" + tableName + ");";
+//    TableSP result = conn.run(script);
+//    cout << "existsTable: " << result->getString() << endl;
+    {
         string script;
         co::fbs::TradeKnockT& knock = out.front();
         TableSP table = createDemoTable(knock);
@@ -162,18 +163,35 @@ int main(int argc, char *argv[]) {
         script += "db2 = database(\"\", HASH,[STRING,10]);";
         script += "tableName = `demoTable;";
         script += "db = database(dbPath,COMPO,[db1,db2],engine=\"TSDB\");";
-        script += "date = db.createPartitionedTable(mt,tableName, partitionColumns=`trade_date`code,sortColumns=`code`fund_id`match_no`trade_date,keepDuplicates=FIRST);";
+        script += "date = db.createPartitionedTable(mt,tableName, partitionColumns=`trade_date`code,sortColumns=`fund_id`order_no`trade_date,keepDuplicates=FIRST);";
         script += "tradTable=database(dbPath).loadTable(tableName).append!(mt);";
         TableSP result = conn.run(script);
         out.erase(out.begin());
     }
+//    {
+//        LOG_INFO << "start insert";
+//        int64_t start_time = x::NSTimestamp();
+//        for (auto& it : out) {
+//            vector<ConstantSP> args;
+//            TableSP table = createDemoTable(it);
+//            args.push_back(table);
+//            conn.run("tableInsert{loadTable('dfs://SAMPLE_TRDDB', `demoTable)}", args);
+//        }
+//        int64_t end_time = x::NSTimestamp();
+//        LOG_INFO << "insert num: " << out.size() << ", time spread: " << end_time - start_time;
+//    }
 
     {
-        shared_ptr<BatchTableWriter> btw = make_shared<BatchTableWriter>(host, port, userId, password, true);
-        btw->addTable("dfs://SAMPLE_TRDDB", "demoTable");
+//        shared_ptr<BatchTableWriter> btw = make_shared<BatchTableWriter>(host, port, userId, password, true);
+//        btw->addTable("dfs://SAMPLE_TRDDB", "demoTable");
+        vector<COMPRESS_METHOD> compress;
+        // compress.push_back(COMPRESS_LZ4);
+        MultithreadedTableWriter writer(host, port, userId, password, "dfs://SAMPLE_TRDDB", "demoTable", false, false,
+                                        NULL, 10000, 1, 5, "trade_date", &compress);
+        ErrorCodeInfo errorInfo;
         LOG_INFO << "start insert";
         int64_t start_time = x::NSTimestamp();
-        for(auto& it : out) {
+        for (auto &it: out) {
             int64_t timestamp = it.timestamp;
             int64_t date = timestamp / 1000000000LL;
             int year = date / 10000;
@@ -187,37 +205,90 @@ int main(int argc, char *argv[]) {
             time %= 10000;
             int min = time / 100;
             int second = time % 100;
-            btw->insert("dfs://SAMPLE_TRDDB", "demoTable"
-                    , Util::createString(it.code)
-                    , Util::createDate(year, month, day)
-                    , Util::createTime(hour, min, second, micro_second)
-                    , Util::createString(it.id)
-                    , Util::createLong(it.trade_type)
-                    , Util::createString(it.fund_id)
-                    , Util::createString(it.username)
-                    , Util::createString(it.inner_match_no)
-                    , Util::createString(it.match_no)
-                    , Util::createLong(it.market)
-                    , Util::createString(it.name)
-                    , Util::createString(it.order_no)
-                    , Util::createString(it.batch_no)
-                    , Util::createLong(it.bs_flag)
-                    , Util::createLong(it.oc_flag)
-                    , Util::createLong(it.match_type)
-                    , Util::createLong(it.match_volume)
-                    , Util::createDouble(it.match_price)
-                    , Util::createDouble(it.match_amount)
-                    , Util::createString(it.error)
-                    , Util::createLong(it.recv_time)
-            );
+            if (writer.insert(errorInfo, Util::createString(it.code), Util::createDate(year, month, day),
+                              Util::createTime(hour, min, second, micro_second), Util::createString(it.id),
+                              Util::createLong(it.trade_type), Util::createString(it.fund_id),
+                              Util::createString(it.username), Util::createString(it.inner_match_no),
+                              Util::createString(it.match_no), Util::createLong(it.market), Util::createString(it.name),
+                              Util::createString(it.order_no), Util::createString(it.batch_no),
+                              Util::createLong(it.bs_flag), Util::createLong(it.oc_flag),
+                              Util::createLong(it.match_type), Util::createLong(it.match_volume),
+                              Util::createDouble(it.match_price), Util::createDouble(it.match_amount),
+                              Util::createString(it.error), Util::createLong(it.recv_time)
+            ) == false) {
+                cout << "insert failed: " << errorInfo.errorInfo << endl;
+                break;
+            }
             // LOG_INFO << "insert knock data";
         }
         // btw->removeTable("dfs://SAMPLE_TRDDB", "demoTable");
         int64_t end_time = x::NSTimestamp();
         LOG_INFO << "insert num: " << out.size() << ", time spread: " << end_time - start_time;
+        //检查目前MTW的状态
+        MultithreadedTableWriter::Status status;
+        writer.getStatus(status);
+        if (status.hasError()) {
+            cout << "error in writing: " << status.errorInfo << endl;
+        }
+        //等待MTW完全退出
+        writer.waitForThreadCompletion();
+        //再次检查完成后的MTW状态
+        writer.getStatus(status);
+        if (status.hasError()) {
+            cout << "error after write complete: " << status.errorInfo << endl;
+        }
     }
 
-    sleep(3);
+//    {
+//        shared_ptr<BatchTableWriter> btw = make_shared<BatchTableWriter>(host, port, userId, password, true);
+//        btw->addTable("dfs://SAMPLE_TRDDB", "demoTable");
+//        LOG_INFO << "start insert";
+//        int64_t start_time = x::NSTimestamp();
+//        for(auto& it : out) {
+//            int64_t timestamp = it.timestamp;
+//            int64_t date = timestamp / 1000000000LL;
+//            int year = date / 10000;
+//            date %= 10000;
+//            int month = date / 100;
+//            int day = date % 100;
+//            int64_t time = timestamp % 1000000000LL;
+//            int micro_second = time % 1000;
+//            time /= 1000;
+//            int hour = time / 10000;
+//            time %= 10000;
+//            int min = time / 100;
+//            int second = time % 100;
+//            btw->insert("dfs://SAMPLE_TRDDB", "demoTable"
+//                    , Util::createString(it.code)
+//                    , Util::createDate(year, month, day)
+//                    , Util::createTime(hour, min, second, micro_second)
+//                    , Util::createString(it.id)
+//                    , Util::createLong(it.trade_type)
+//                    , Util::createString(it.fund_id)
+//                    , Util::createString(it.username)
+//                    , Util::createString(it.inner_match_no)
+//                    , Util::createString(it.match_no)
+//                    , Util::createLong(it.market)
+//                    , Util::createString(it.name)
+//                    , Util::createString(it.order_no)
+//                    , Util::createString(it.batch_no)
+//                    , Util::createLong(it.bs_flag)
+//                    , Util::createLong(it.oc_flag)
+//                    , Util::createLong(it.match_type)
+//                    , Util::createLong(it.match_volume)
+//                    , Util::createDouble(it.match_price)
+//                    , Util::createDouble(it.match_amount)
+//                    , Util::createString(it.error)
+//                    , Util::createLong(it.recv_time)
+//            );
+//            // LOG_INFO << "insert knock data";
+//        }
+//        // btw->removeTable("dfs://SAMPLE_TRDDB", "demoTable");
+//        int64_t end_time = x::NSTimestamp();
+//        LOG_INFO << "insert num: " << out.size() << ", time spread: " << end_time - start_time;
+//    }
+
+    sleep(300);
     return 0;
     /////////////////////////////
     {

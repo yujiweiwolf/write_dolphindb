@@ -1,0 +1,22 @@
+address:
+  feed_gateway: tcp://127.0.0.1:8000
+  trade_gateway: tcp://192.168.129.143:7102
+  # 1 socket接收数据，2 读wal文件
+  type: 2
+  #wal_file:
+  wal_file: /home/work/sys/develop/write_dolphindb/data/feed_20230425_20230425105537700.stock1.wal
+
+dolphindb:
+  host: 192.168.101.115
+  port: 8848
+  userId: admin
+  password: .123456
+  dbpath: dfs://SAMPLE_TRDDB
+  tradeknockname: TradeKnockTable
+  tickname: QTickTable
+  ordername: QOrderTable
+  knockname: QKnockTable
+
+
+
+

@@ -8,7 +8,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -Wall")
 add_compile_options(-std=c++17 -Wall -O2)
 #add_definitions(-DLOGGING_LEVEL_2 -DLINUX -D_GLIBCXX_USE_CXX11_ABI=0)
 #add_definitions(-DLOGGING_LEVEL_2 -DLINUX)
-add_definitions(-DLOGGING_LEVEL_2 -DLINUX -D_GLIBCXX_USE_CXX11_ABI=1)
+#add_definitions(-DLOGGING_LEVEL_2 -DLINUX -D_GLIBCXX_USE_CXX11_ABI=1)
 
 set(ROOT_DIR "/home/work/sys/lib")
 macro(SUBDIRLIST result curdir)
@@ -35,22 +35,30 @@ set(TEST_KNOCK "test_knock")
 set(TEST_FEEDER "test_feeder")
 set(TEST_ORDER "test_order")
 set(TEST_QKNOCK "test_qknock")
+set(WRITE_DB "write_dolphindb")
 
-add_executable(${TEST_KNOCK} src/test_dolphindb/test_knock.cc)
-target_link_libraries(${TEST_KNOCK}
-        libDolphinDBAPI.so broker coral swordfish x stdc++fs yaml-cpp  clickhouse-cpp-lib-static boost_date_time boost_filesystem boost_regex boost_system  boost_chrono boost_log boost_program_options boost_thread boost_iostreams z protobuf protobuf-lite sodium zmq ssl crypto iconv pthread dl)
+aux_source_directory (./src/write_dolphindb SRC_LIST)
 
-add_executable(${TEST_FEEDER} src/test_dolphindb/test_feeder.cc)
-target_link_libraries(${TEST_FEEDER}
-        libDolphinDBAPI.so broker coral swordfish x stdc++fs yaml-cpp  clickhouse-cpp-lib-static boost_date_time boost_filesystem boost_regex boost_system  boost_chrono boost_log boost_program_options boost_thread boost_iostreams z protobuf protobuf-lite sodium zmq ssl crypto iconv pthread dl)
+add_executable(${WRITE_DB} ${SRC_LIST})
+target_link_libraries(${WRITE_DB}
+        libDolphinDBAPI.so broker feeder coral swordfish x stdc++fs yaml-cpp  clickhouse-cpp-lib-static boost_date_time boost_filesystem boost_regex boost_system  boost_chrono boost_log boost_program_options boost_thread boost_iostreams boost_context boost_coroutine z protobuf protobuf-lite sodium zmq ssl crypto iconv pthread dl)
 
-add_executable(${TEST_ORDER} src/test_dolphindb/test_order.cc)
-target_link_libraries(${TEST_ORDER}
-        libDolphinDBAPI.so broker coral swordfish x stdc++fs yaml-cpp  clickhouse-cpp-lib-static boost_date_time boost_filesystem boost_regex boost_system  boost_chrono boost_log boost_program_options boost_thread boost_iostreams z protobuf protobuf-lite sodium zmq ssl crypto iconv pthread dl)
 
-add_executable(${TEST_QKNOCK} src/test_dolphindb/test_qknock.cc)
-target_link_libraries(${TEST_QKNOCK}
-        libDolphinDBAPI.so broker coral swordfish x stdc++fs yaml-cpp  clickhouse-cpp-lib-static boost_date_time boost_filesystem boost_regex boost_system  boost_chrono boost_log boost_program_options boost_thread boost_iostreams z protobuf protobuf-lite sodium zmq ssl crypto iconv pthread dl)
+#add_executable(${TEST_KNOCK} src/test_dolphindb/test_knock.cc)
+#target_link_libraries(${TEST_KNOCK}
+#        libDolphinDBAPI.so broker coral swordfish x stdc++fs yaml-cpp  clickhouse-cpp-lib-static boost_date_time boost_filesystem boost_regex boost_system  boost_chrono boost_log boost_program_options boost_thread boost_iostreams z protobuf protobuf-lite sodium zmq ssl crypto iconv pthread dl)
+
+#add_executable(${TEST_FEEDER} src/test_dolphindb/test_feeder.cc)
+#target_link_libraries(${TEST_FEEDER}
+#        libDolphinDBAPI.so broker coral swordfish x stdc++fs yaml-cpp  clickhouse-cpp-lib-static boost_date_time boost_filesystem boost_regex boost_system  boost_chrono boost_log boost_program_options boost_thread boost_iostreams z protobuf protobuf-lite sodium zmq ssl crypto iconv pthread dl)
+
+#add_executable(${TEST_ORDER} src/test_dolphindb/test_order.cc)
+#target_link_libraries(${TEST_ORDER}
+#        libDolphinDBAPI.so broker coral swordfish x stdc++fs yaml-cpp  clickhouse-cpp-lib-static boost_date_time boost_filesystem boost_regex boost_system  boost_chrono boost_log boost_program_options boost_thread boost_iostreams z protobuf protobuf-lite sodium zmq ssl crypto iconv pthread dl)
+#
+#add_executable(${TEST_QKNOCK} src/test_dolphindb/test_qknock.cc)
+#target_link_libraries(${TEST_QKNOCK}
+#        libDolphinDBAPI.so broker coral swordfish x stdc++fs yaml-cpp  clickhouse-cpp-lib-static boost_date_time boost_filesystem boost_regex boost_system  boost_chrono boost_log boost_program_options boost_thread boost_iostreams z protobuf protobuf-lite sodium zmq ssl crypto iconv pthread dl)
 
 
 FILE(GLOB LIBS_NAME "lib/openssl-1.0.2u/*.so*")
