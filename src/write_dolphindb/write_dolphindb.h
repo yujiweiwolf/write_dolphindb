@@ -13,12 +13,11 @@
 #include <x/x.h>
 #include "coral/wal_reader.h"
 #include "feeder/feeder.h"
+#include "tick_writer.h"
+#include "order_writer.h"
+#include "knock_writer.h"
+#include "tradeknock_writer.h"
 
-
-//using namespace std;
-//using namespace co;
-//namespace po = boost::program_options;
-//using namespace dolphindb;
 
 namespace co {
     using namespace std;
@@ -46,18 +45,19 @@ namespace co {
 
         string dbpath_ = "";
         string tradeknockname_ = "";
+        shared_ptr<TradeKnockWriter> tradeknock_writer_;
+
         string tickname_ = "";
-        int write_tick_step_ = 0;
-        shared_ptr<BatchTableWriter> tick_btw_;
+        shared_ptr<TickWriter> tick_writer_;
+
         string ordername_ = "";
+        shared_ptr<OrderWriter> order_writer_;
+
         string knockname_ = "";
+        shared_ptr<KnockWriter> knock_writer_;
 
         std::string feed_gateway_;
         std::shared_ptr<StringQueue> feed_queue_ = nullptr;
         std::vector<std::unique_ptr<x::ZMQ>> socks_;
-
-        shared_ptr<BatchTableWriter> qtick_writer_;
-        shared_ptr<BatchTableWriter> qorder_writer_;
-        shared_ptr<BatchTableWriter> qknock_writer_;
     };
 }
