@@ -10,7 +10,7 @@ using namespace std;
 using namespace co;
 namespace po = boost::program_options;
 
-const string kVersion = "v1.0.1";
+const string kVersion = "v1.0.2";
 
 int main(int argc, char* argv[]) {
     po::options_description desc("[Broker Server] Usage");
@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
         return 0;
     }
     try {
-        __info << kVersion;
+        __info << "kVersion: " <<kVersion;
         Config::Instance();
         shared_ptr<DolphindbWriter> db_writer = make_shared<DolphindbWriter>();
         db_writer->Init();

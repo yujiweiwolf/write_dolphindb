@@ -60,7 +60,7 @@ namespace co {
                                         "bid_cancel_amount","ask_order_volume","ask_order_amount","ask_cancel_volume","ask_cancel_amount",
                                         "new_knock_count","sum_knock_count","date","cursor"};
 
-            vector<DATA_TYPE> colTypes = {DT_STRING,DT_DATE,DT_TIME,DT_CHAR,DT_CHAR,DT_STRING,DT_CHAR,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,
+            vector<DATA_TYPE> colTypes = {DT_SYMBOL,DT_DATE,DT_TIME,DT_CHAR,DT_CHAR,DT_STRING,DT_CHAR,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,
                                           DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,
                                           DT_LONG,DT_LONG,DT_LONG,DT_LONG,DT_LONG,DT_LONG,DT_LONG,DT_LONG,DT_LONG,DT_LONG,
                                           DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,

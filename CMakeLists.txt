@@ -48,9 +48,9 @@ target_link_libraries(${WRITE_DB}
 #target_link_libraries(${TEST_KNOCK}
 #        libDolphinDBAPI.so broker coral swordfish x stdc++fs yaml-cpp  clickhouse-cpp-lib-static boost_date_time boost_filesystem boost_regex boost_system  boost_chrono boost_log boost_program_options boost_thread boost_iostreams z protobuf protobuf-lite sodium zmq ssl crypto iconv pthread dl)
 
-#add_executable(${TEST_FEEDER} src/test_dolphindb/test_feeder.cc)
-#target_link_libraries(${TEST_FEEDER}
-#        libDolphinDBAPI.so broker coral swordfish x stdc++fs yaml-cpp  clickhouse-cpp-lib-static boost_date_time boost_filesystem boost_regex boost_system  boost_chrono boost_log boost_program_options boost_thread boost_iostreams z protobuf protobuf-lite sodium zmq ssl crypto iconv pthread dl)
+add_executable(${TEST_FEEDER} src/test_dolphindb/test_feeder.cc)
+target_link_libraries(${TEST_FEEDER}
+        libDolphinDBAPI.so broker coral swordfish x stdc++fs yaml-cpp  clickhouse-cpp-lib-static boost_date_time boost_filesystem boost_regex boost_system  boost_chrono boost_log boost_program_options boost_thread boost_iostreams z protobuf protobuf-lite sodium zmq ssl crypto iconv pthread dl)
 
 #add_executable(${TEST_ORDER} src/test_dolphindb/test_order.cc)
 #target_link_libraries(${TEST_ORDER}
@@ -67,4 +67,7 @@ FILE(COPY lib/dolphindb/lib/libDolphinDBAPI.so DESTINATION ${CMAKE_CURRENT_BINAR
 
 FILE(GLOB COMMON_LIB_NAME "${ROOT_DIR}/common_lib/lib/*so*")
 FILE(COPY ${COMMON_LIB_NAME} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+FILE(COPY Dockerfile image.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+add_custom_target(image COMMAND sh image.sh ${WRITE_DB} DEPENDS ${WRITE_DB})
 

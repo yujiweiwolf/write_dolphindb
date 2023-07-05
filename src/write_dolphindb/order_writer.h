@@ -25,7 +25,7 @@ namespace co {
                     script += "db2 = database(\"\", HASH,[STRING,10]);";
                     script += "tableName = `" + tablename_ + ";";
                     script += "db = database(dbPath,COMPO,[db1,db2],engine=\"TSDB\");";
-                    script += "date = db.createPartitionedTable(mt,tableName, partitionColumns=`date`code,sortColumns=`code`order_no`date,keepDuplicates=FIRST);";
+                    script += "date = db.createPartitionedTable(mt,tableName, partitionColumns=`date`code,sortColumns=`code`order_no`date,keepDuplicates=FIRST,sortKeyMappingFunction=[hashBucket{,499}, hashBucket{,1}]);";
                     script += "tradTable=database(dbPath).loadTable(tableName).append!(mt);";
                     TableSP result = conn_->run(script);
                     return;
@@ -47,7 +47,7 @@ namespace co {
     private:
         TableSP createTable(std::string& raw) {
             vector<string> colNames = { "code","date","time","order_no","bs_flag","order_type","order_price","order_volume","recv_time"};
-            vector<DATA_TYPE> colTypes = {DT_STRING,DT_DATE,DT_TIME,DT_LONG,DT_CHAR,DT_CHAR,DT_DOUBLE,DT_LONG,DT_LONG};
+            vector<DATA_TYPE> colTypes = {DT_SYMBOL,DT_DATE,DT_TIME,DT_LONG,DT_CHAR,DT_CHAR,DT_DOUBLE,DT_LONG,DT_LONG};
             int colNum = 9, rowNum = 1;
             ConstantSP table = Util::createTable(colNames, colTypes, rowNum, 100);
             vector<VectorSP> columnVecs;

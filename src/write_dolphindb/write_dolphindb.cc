@@ -15,7 +15,12 @@ namespace co {
         userId_ = Config::Instance()->userId();
         password_ = Config::Instance()->password();
         try {
-            bool ret = conn.connect(host_, port_, userId_, password_);
+            string initialScript = "";
+            bool highAvailability = false;
+            vector<string> highAvailabilitySites;
+            int keepAliveTime = 30;
+            bool reconnect = true;
+            bool ret = conn.connect(host_, port_, userId_, password_, initialScript, highAvailability, highAvailabilitySites, keepAliveTime, reconnect);
             if (!ret) {
                 LOG_ERROR << "Failed to connect dolphindb";
                 return;
@@ -75,16 +80,28 @@ namespace co {
             switch (type) {
                 case kFBPrefixQTick: {
                     tick_num++;
+                    if (tick_num % 10000 == 0) {
+                        x::Sleep(100);
+                        LOG_INFO << "tick num: " << tick_num;
+                    }
                     WriteQTick(raw);
                     break;
                 }
                 case kFBPrefixQOrder: {
                     order_num++;
+                    if (order_num % 10000 == 0) {
+                        x::Sleep(100);
+                        LOG_INFO << "order num: " << order_num;
+                    }
                     WriteQOrder(raw);
                     break;
                 }
                 case kFBPrefixQKnock: {
                     knock_num++;
+                    if (knock_num % 10000 == 0) {
+                        x::Sleep(100);
+                        LOG_INFO << "knock num: " << knock_num;
+                    }
                     WriteQKnock(raw);
                     break;
                 }
