@@ -55,8 +55,6 @@ namespace co {
             tradeknock_writer_->SetDBConnection(&conn, dbpath_, tradeknockname_);
         }
 
-
-
         if (type == 1) {
             Run();
         } else if (type == 2) {
@@ -81,7 +79,7 @@ namespace co {
                 case kFBPrefixQTick: {
                     tick_num++;
                     if (tick_num % 10000 == 0) {
-                        x::Sleep(100);
+                        // x::Sleep(100);
                         LOG_INFO << "tick num: " << tick_num;
                     }
                     WriteQTick(raw);
@@ -90,7 +88,7 @@ namespace co {
                 case kFBPrefixQOrder: {
                     order_num++;
                     if (order_num % 10000 == 0) {
-                        x::Sleep(100);
+                        // x::Sleep(100);
                         LOG_INFO << "order num: " << order_num;
                     }
                     WriteQOrder(raw);
@@ -99,7 +97,7 @@ namespace co {
                 case kFBPrefixQKnock: {
                     knock_num++;
                     if (knock_num % 10000 == 0) {
-                        x::Sleep(100);
+                        // x::Sleep(100);
                         LOG_INFO << "knock num: " << knock_num;
                     }
                     WriteQKnock(raw);
@@ -116,29 +114,16 @@ namespace co {
     }
 
     void DolphindbWriter::Run() {
-//        co::FeedService feeder;
-//        if (!feed_gateway_.empty()) {
-//            feeder.set_queue(feed_queue_);
-//            feeder.Init(feed_gateway_);
-//            feeder.set_disable_index(true);
-//            feeder.SubQTick("");
-//            feeder.Start();
-//        }
-        string recv_address = "192.168.129.143:7102,127.0.0.1:8080";
-        std::vector<std::string> addresses;
-        x::Split(&addresses, recv_address, ",");
-        for (auto& address: addresses) {
-            if (address.empty()) {
-                continue;
-            }
-            auto sock = std::make_unique<x::ZMQ>(ZMQ_SUB);
-            sock->SetSockOpt(ZMQ_LINGER, 1);
-            sock->SetSockOpt(ZMQ_SNDHWM, 0);
-            sock->SetSockOpt(ZMQ_RATE, 100 * 1024 * 1024);
-            sock->Connect(address);
-
-            socks_.emplace_back(std::move(sock));
+        string feed_gateway_ = Config::Instance()->feed_gateway();
+        LOG_INFO << "feed_gateway: " << feed_gateway_;
+        co::MyFeedService feeder;
+        if (!feed_gateway_.empty()) {
+            feeder.set_queue(feed_queue_);
+            feeder.Init(feed_gateway_);
+            feeder.SubQTick("");
+            feeder.Start();
         }
+
         std::string raw;
         int64_t type = 0;
         while (true) {
