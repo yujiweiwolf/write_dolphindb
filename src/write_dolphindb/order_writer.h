@@ -25,7 +25,7 @@ namespace co {
                     script += "db2 = database(\"\", HASH,[STRING,10]);";
                     script += "tableName = `" + tablename_ + ";";
                     script += "db = database(dbPath,COMPO,[db1,db2],engine=\"TSDB\");";
-                    script += "date = db.createPartitionedTable(mt,tableName, partitionColumns=`date`code,sortColumns=`code`order_no`date,keepDuplicates=FIRST,sortKeyMappingFunction=[hashBucket{,499}, hashBucket{,1}]);";
+                    script += "date = db.createPartitionedTable(mt,tableName, partitionColumns=`date`code,sortColumns=`code`order_no`order_type`date,keepDuplicates=FIRST,sortKeyMappingFunction=[hashBucket{,499}, hashBucket{,1}, hashBucket{, 1}]);";
                     script += "tradTable=database(dbPath).loadTable(tableName).append!(mt);";
                     TableSP result = conn_->run(script);
                     return;
