@@ -110,7 +110,7 @@ void GetKnock(const string& file, std::vector<co::fbs::TradeKnockT>& out) {
                 item.match_amount = knock->match_amount();
                 item.error = knock->error() ? knock->error()->str() : "";
                 item.recv_time = knock->recv_time();
-//                __info << "code: " << item.code
+//                LOG_INFO << "code: " << item.code
 //                       << ", timestamp: " << item.timestamp
 //                       << ", order_no: " << item.order_no
 //                       << ", match_no: " << item.match_no

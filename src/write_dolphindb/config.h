@@ -43,11 +43,8 @@ namespace co {
         inline string wal_file() {
             return wal_file_;
         }
-        inline string feed_gateway() {
-            return feed_gateway_;
-        }
-        inline string trade_gateway() {
-            return trade_gateway_;
+        inline string mmap() {
+            return mmap_;
         }
     protected:
         Config() = default;
@@ -69,9 +66,8 @@ namespace co {
         string ordername_;
         string knockname_;
 
-        string feed_gateway_;
-        string trade_gateway_;
         int type_;
+        string mmap_;
         string wal_file_;
     };
 }  // namespace co

@@ -123,7 +123,7 @@ void GetData(const string& file) {
 //                int64_t sum_amount = q->sum_amount();
 //                int64_t new_volume = q->new_volume();
 //                int64_t new_amount = q->new_amount();
-//                __info << "order code: " << code;
+//                LOG_INFO << "order code: " << code;
                 break;
             }
             case kFBPrefixQKnock: {
@@ -135,7 +135,7 @@ void GetData(const string& file) {
 //                int64_t sum_amount = q->sum_amount();
 //                int64_t new_volume = q->new_volume();
 //                int64_t new_amount = q->new_amount();
-//                __info << "konck code: " << code;
+//                LOG_INFO << "konck code: " << code;
                 break;
             }
             default:

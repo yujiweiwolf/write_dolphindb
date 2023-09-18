@@ -22,7 +22,7 @@ std::vector<co::fbs::QOrderT> all_order;
 std::vector<co::fbs::QKnockT> all_knock;
 
 TableSP createQTickTable(std::string& raw) {
-    vector<string> colNames = { "code","tick_date","tick_time","src","dtype","name","market","pre_close","upper_limit","lower_limit",
+    vector<string> colNames = { "code","date","time","src","dtype","name","market","pre_close","upper_limit","lower_limit",
                                 "bp0","bp1","bp2","bp3","bp4","bp5","bp6","bp7","bp8","bp9",
                                 "bv0","bv1","bv2","bv3","bv4","bv5","bv6","bv7","bv8","bv9",
                                 "ap0","ap1","ap2","ap3","ap4","ap5","ap6","ap7","ap8","ap9",
@@ -34,7 +34,7 @@ TableSP createQTickTable(std::string& raw) {
                                 "exercise_price","cp_flag","underlying_code","sum_bid_volume","sum_bid_amount",
                                 "sum_ask_volume","sum_ask_amount","bid_order_volume","bid_order_amount","bid_cancel_volume",
                                 "bid_cancel_amount","ask_order_volume","ask_order_amount","ask_cancel_volume","ask_cancel_amount",
-                                "new_knock_count","sum_knock_count","date","cursor"};
+                                "new_knock_count","sum_knock_count","trading_date","cursor"};
 
     vector<DATA_TYPE> colTypes = {DT_STRING,DT_DATE,DT_TIME,DT_CHAR,DT_CHAR,DT_STRING,DT_CHAR,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,
                                   DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,
@@ -247,7 +247,7 @@ void GetData(const string& file) {
 //                int64_t sum_amount = q->sum_amount();
 //                int64_t new_volume = q->new_volume();
 //                int64_t new_amount = q->new_amount();
-//                __info << "order code: " << code;
+//                LOG_INFO << "order code: " << code;
                 break;
             }
             case kFBPrefixQKnock: {
@@ -259,7 +259,7 @@ void GetData(const string& file) {
 //                int64_t sum_amount = q->sum_amount();
 //                int64_t new_volume = q->new_volume();
 //                int64_t new_amount = q->new_amount();
-//                __info << "konck code: " << code;
+//                LOG_INFO << "konck code: " << code;
                 break;
             }
             default:
@@ -272,7 +272,7 @@ int main(int argc, char *argv[]) {
     std::vector<co::fbs::TradeKnockT> out;
     string file = argv[1];
     GetData(file);
-    string host = "192.168.101.115";
+    string host = "192.168.101.237";
     int port = 8848;
     string userId = "admin";
     string password = "123456";
@@ -307,9 +307,9 @@ int main(int argc, char *argv[]) {
         script += "db2 = database(\"\", HASH,[STRING,10]);";
         script += "tableName = `QTickTable;";
 //        script += "db = database(dbPath,COMPO,[db1,db2]);";
-//        script += "date = db.createPartitionedTable(mt,tableName,`tick_date`code);";
+//        script += "date = db.createPartitionedTable(mt,tableName,`date`code);";
         script += "db = database(dbPath,COMPO,[db1,db2],engine=\"TSDB\");";
-        script += "date = db.createPartitionedTable(mt,tableName, partitionColumns=`tick_date`code,sortColumns=`code`tick_date`tick_time,keepDuplicates=FIRST);";
+        script += "date = db.createPartitionedTable(mt,tableName, partitionColumns=`date`code,sortColumns=`code`date`time,keepDuplicates=FIRST);";
         script += "tradTable=database(dbPath).loadTable(tableName).append!(mt);";
         LOG_INFO << script;
         TableSP result = conn.run(script);

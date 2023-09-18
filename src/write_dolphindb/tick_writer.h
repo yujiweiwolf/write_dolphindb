@@ -25,7 +25,7 @@ namespace co {
                     script += "db2 = database(\"\", HASH,[STRING,10]);";
                     script += "tableName = `" + tablename_ + ";";
                     script += "db = database(dbPath,COMPO,[db1,db2],engine=\"TSDB\");";
-                    script += "date = db.createPartitionedTable(mt,tableName, partitionColumns=`tick_date`code,sortColumns=`code`tick_date`tick_time,keepDuplicates=FIRST);";
+                    script += "date = db.createPartitionedTable(mt,tableName, partitionColumns=`date`code,sortColumns=`code`date`time,keepDuplicates=FIRST);";
                     script += "tradTable=database(dbPath).loadTable(tableName).append!(mt);";
                     TableSP result = conn_->run(script);
                     return;
@@ -46,7 +46,7 @@ namespace co {
 
     private:
         TableSP createTable(std::string& raw) {
-            vector<string> colNames = { "code","tick_date","tick_time","src","dtype","name","market","pre_close","upper_limit","lower_limit",
+            vector<string> colNames = { "code","date","time","src","dtype","name","market","pre_close","upper_limit","lower_limit",
                                         "bp0","bp1","bp2","bp3","bp4","bp5","bp6","bp7","bp8","bp9",
                                         "bv0","bv1","bv2","bv3","bv4","bv5","bv6","bv7","bv8","bv9",
                                         "ap0","ap1","ap2","ap3","ap4","ap5","ap6","ap7","ap8","ap9",
@@ -58,7 +58,7 @@ namespace co {
                                         "exercise_price","cp_flag","underlying_code","sum_bid_volume","sum_bid_amount",
                                         "sum_ask_volume","sum_ask_amount","bid_order_volume","bid_order_amount","bid_cancel_volume",
                                         "bid_cancel_amount","ask_order_volume","ask_order_amount","ask_cancel_volume","ask_cancel_amount",
-                                        "new_knock_count","sum_knock_count","date","cursor"};
+                                        "new_knock_count","sum_knock_count","trading_date","cursor"};
 
             vector<DATA_TYPE> colTypes = {DT_SYMBOL,DT_DATE,DT_TIME,DT_CHAR,DT_CHAR,DT_STRING,DT_CHAR,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,
                                           DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,

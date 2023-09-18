@@ -1,9 +1,10 @@
 #include "write_dolphindb.h"
+#include <filesystem>
+namespace fs = std::filesystem;
 
 namespace co {
 
     DolphindbWriter::DolphindbWriter() {
-        feed_queue_ = std::make_shared<StringQueue>();
     }
 
     DolphindbWriter::~DolphindbWriter() {
@@ -114,41 +115,32 @@ namespace co {
     }
 
     void DolphindbWriter::Run() {
-        string feed_gateway_ = Config::Instance()->feed_gateway();
-        LOG_INFO << "feed_gateway: " << feed_gateway_;
-        co::MyFeedService feeder;
-        if (!feed_gateway_.empty()) {
-            feeder.set_queue(feed_queue_);
-            feeder.Init(feed_gateway_);
-            feeder.SubQTick("");
-            feeder.Start();
-        }
-
-        std::string raw;
-        int64_t type = 0;
-        while (true) {
-            if (!feed_queue_->Empty()) {
-                type = feed_queue_->Pop(&raw);
-                if (type != 0) {
-                    switch (type) {
-                        case kFBPrefixQTick: {
-                            WriteQTick(raw);
-                            break;
-                        }
-                        case kFBPrefixQOrder: {
-                            WriteQOrder(raw);
-                            break;
-                        }
-                        case kFBPrefixQKnock: {
-                            WriteQKnock(raw);
-                            break;
-                        }
-                        default: {
-                            break;
-                        }
-                    }
+        x::MMapReader feeder_reader_;
+        string mmap = Config::Instance()->mmap();
+        std::vector<std::string> all_directors;
+        x::Split(&all_directors, mmap, ";", true);
+        for (auto& it: all_directors) {
+            std::vector<std::string> sub_directors;
+            if (!fs::exists(it) || !fs::is_directory(it)) {
+                continue;
+            }
+            for (auto& entry : fs::directory_iterator(it)) {
+                if (fs::is_directory(entry)) {
+                    sub_directors.push_back(entry.path().string());
                 }
             }
+            sort(sub_directors.begin(), sub_directors.end(), [](string a, string b) {return a > b; });
+            for (auto& it : sub_directors) {
+                LOG_INFO << it;
+            }
+            if (!sub_directors.empty()) {
+                string file = sub_directors.front();
+                feeder_reader_.Open(file, "dynamic_data");
+                feeder_reader_.Open(file, "static_contract");
+            }
+        }
+        while (true) {
+
         }
     }
 

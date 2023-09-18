@@ -12,13 +12,10 @@
 #include "config.h"
 #include <x/x.h>
 #include "coral/wal_reader.h"
-// #include "feeder/feeder.h"
 #include "tick_writer.h"
 #include "order_writer.h"
 #include "knock_writer.h"
 #include "tradeknock_writer.h"
-#include "feed_service.h"
-
 
 namespace co {
     using namespace std;
@@ -56,8 +53,5 @@ namespace co {
 
         string knockname_ = "";
         shared_ptr<KnockWriter> knock_writer_;
-
-        std::shared_ptr<StringQueue> feed_queue_ = nullptr;
-        std::vector<std::unique_ptr<x::ZMQ>> socks_;
     };
 }

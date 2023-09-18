@@ -63,19 +63,17 @@ namespace co {
         ordername_ = getStr(dolphindb, "ordername");
         knockname_ = getStr(dolphindb, "knockname");
 
-        auto address = root["address"];
-        feed_gateway_ = getStr(address, "feed_gateway");
-        trade_gateway_ = getStr(address, "trade_gateway");
+        auto address = root["data"];
         type_ = getInt(address, "type");
+        mmap_ = getStr(address, "mmap");
         wal_file_ = getStr(address, "wal_file");
 
         stringstream ss;
         ss << "+-------------------- configuration begin --------------------+" << endl;
         ss << endl;
-        ss << "address:     " << endl
-            << "  feed_gateway: " << feed_gateway_ << endl
-            << "  trade_gateway: " << trade_gateway_ << endl
+        ss << "data:     " << endl
             << "  type: " << type_ << endl
+            << "  mmap: " << mmap_ << endl
             << "  wal_file: " << wal_file_ << endl
             << "dolphindb:      " << endl
             << "  host: " << host_ << endl
@@ -88,6 +86,6 @@ namespace co {
             << "  ordername: " << ordername_ << endl
             << "  knockname: " << knockname_ << endl;
         ss << "+-------------------- configuration end   --------------------+";
-        __info << endl << ss.str();
+        LOG_INFO << endl << ss.str();
     }
 }  // namespace co

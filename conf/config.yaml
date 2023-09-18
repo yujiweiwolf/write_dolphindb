@@ -1,9 +1,7 @@
-address:
-  feed_gateway: tcp://127.0.0.1:8000
-  trade_gateway: tcp://192.168.129.143:7102
-  # 1 socket接收数据，2 读wal文件
+data:
+  # 1 读mmap数据，2 读wal文件
   type: 2
-  #wal_file:
+  mmap: /home/work/sys/develop/feeder_ctp/data;/data/wind/mmap
   wal_file: /home/work/sys/develop/write_dolphindb/data/feed_20230425_20230425105537700.stock1.wal
 
 dolphindb:
