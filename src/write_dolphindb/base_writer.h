@@ -12,6 +12,7 @@
 #include "config.h"
 #include <x/x.h>
 #include "coral/wal_reader.h"
+#include "coral/coral.h"
 #include "feeder/feeder.h"
 
 namespace co {

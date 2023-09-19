@@ -44,11 +44,48 @@ namespace co {
             }
         }
 
+        void WriteDate(MemQOrder* order) {
+            if (write_step_ == 0) {
+                write_step_++;
+                string script;
+                script += "existsTable(\"" + dbpath_ + "\", `" + tablename_ + ");";
+                LOG_INFO << script;
+                TableSP result = conn_->run(script);
+                LOG_INFO << dbpath_ << ", " << tablename_ << ", exist result: " << result->getString();
+                if (result->getString() == "0") {
+                    string script;
+                    TableSP table = createTable(order);
+                    conn_->upload("mt", table);
+                    script += "login(`" + userId_ + ",`" + password_ + ");";
+                    script += "dbPath = \"" + dbpath_ + "\";";
+                    script += "db1 = database("", VALUE, 2023.01.01..2023.12.31);";
+                    script += "db2 = database(\"\", HASH,[STRING,10]);";
+                    script += "tableName = `" + tablename_ + ";";
+                    script += "db = database(dbPath,COMPO,[db1,db2],engine=\"TSDB\");";
+                    script += "date = db.createPartitionedTable(mt,tableName, partitionColumns=`date`code,sortColumns=`code`order_no`order_type`date,keepDuplicates=FIRST,sortKeyMappingFunction=[hashBucket{,499}, hashBucket{,1}, hashBucket{, 1}]);";
+                    script += "tradTable=database(dbPath).loadTable(tableName).append!(mt);";
+                    TableSP result = conn_->run(script);
+                    return;
+                }
+            }
+
+            if (write_step_ == 1) {
+                write_step_++;
+                btw_ = make_shared<BatchTableWriter>(host_, port_, userId_, password_, true);
+                btw_->addTable(dbpath_, tablename_);
+                LOG_INFO << "addTable, " << dbpath_ << ", " << tablename_;
+            }
+
+            if (write_step_ == 2) {
+                InsertDate(order);
+            }
+        }
+
     private:
         TableSP createTable(std::string& raw) {
-            vector<string> colNames = { "code","date","time","order_no","bs_flag","order_type","order_price","order_volume","recv_time"};
-            vector<DATA_TYPE> colTypes = {DT_SYMBOL,DT_DATE,DT_TIME,DT_LONG,DT_CHAR,DT_CHAR,DT_DOUBLE,DT_LONG,DT_LONG};
-            int colNum = 9, rowNum = 1;
+            vector<string> colNames = { "code","date","time","order_no","bs_flag","order_type","order_price","order_volume"};
+            vector<DATA_TYPE> colTypes = {DT_SYMBOL,DT_DATE,DT_TIME,DT_LONG,DT_CHAR,DT_CHAR,DT_DOUBLE,DT_LONG};
+            int colNum = colNames.size(), rowNum = 1;
             ConstantSP table = Util::createTable(colNames, colTypes, rowNum, 100);
             vector<VectorSP> columnVecs;
             columnVecs.reserve(colNum);
@@ -80,7 +117,6 @@ namespace co {
                 columnVecs[index++]->set(i, Util::createChar(q->order_type()));
                 columnVecs[index++]->set(i, Util::createDouble(q->order_price()));
                 columnVecs[index++]->set(i, Util::createLong(q->order_volume()));
-                columnVecs[index++]->set(i, Util::createLong(q->recv_time()));
             }
             return table;
         }
@@ -111,7 +147,70 @@ namespace co {
                     , Util::createChar(q->order_type())
                     , Util::createDouble(q->order_price())
                     , Util::createLong(q->order_volume())
-                    , Util::createLong(q->recv_time())
+            );
+        }
+
+        TableSP createTable(MemQOrder* order) {
+            vector<string> colNames = { "code","date","time","order_no","bs_flag","order_type","order_price","order_volume"};
+            vector<DATA_TYPE> colTypes = {DT_SYMBOL,DT_DATE,DT_TIME,DT_LONG,DT_CHAR,DT_CHAR,DT_DOUBLE,DT_LONG};
+            int colNum = colNames.size(), rowNum = 1;
+            ConstantSP table = Util::createTable(colNames, colTypes, rowNum, 100);
+            vector<VectorSP> columnVecs;
+            columnVecs.reserve(colNum);
+            for (int i = 0;i < colNum;i++)
+                columnVecs.emplace_back(table->getColumn(i));
+
+            int64_t timestamp = order->timestamp;
+            int64_t date = timestamp / 1000000000LL;
+            int year = date / 10000;
+            date %= 10000;
+            int month = date / 100;
+            int day = date % 100;
+            int64_t time = timestamp % 1000000000LL;
+            int micro_second = time % 1000;
+            time /= 1000;
+            int hour = time / 10000;
+            time %= 10000;
+            int min = time / 100;
+            int second = time % 100;
+            for (int i = 0;i < rowNum; i++) {
+                int index = 0;
+                columnVecs[index++]->set(i, Util::createString(order->code));
+                columnVecs[index++]->set(i, Util::createDate(year, month, day));
+                columnVecs[index++]->set(i, Util::createTime(hour, min, second, micro_second));
+                columnVecs[index++]->set(i, Util::createLong(order->order_no));
+                columnVecs[index++]->set(i, Util::createChar(order->bs_flag));
+                columnVecs[index++]->set(i, Util::createChar(order->order_type));
+                columnVecs[index++]->set(i, Util::createDouble(order->order_price));
+                columnVecs[index++]->set(i, Util::createLong(order->order_volume));
+            }
+            return table;
+        }
+
+        void InsertDate(MemQOrder* order) {
+            int64_t timestamp = order->timestamp;
+            int64_t date = timestamp / 1000000000LL;
+            int year = date / 10000;
+            date %= 10000;
+            int month = date / 100;
+            int day = date % 100;
+            int64_t time = timestamp % 1000000000LL;
+            int micro_second = time % 1000;
+            time /= 1000;
+            int hour = time / 10000;
+            time %= 10000;
+            int min = time / 100;
+            int second = time % 100;
+
+            btw_->insert(dbpath_, tablename_
+                    , Util::createString(order->code)
+                    , Util::createDate(year, month, day)
+                    , Util::createTime(hour, min, second, micro_second)
+                    , Util::createLong(order->order_no)
+                    , Util::createChar(order->bs_flag)
+                    , Util::createChar(order->order_type)
+                    , Util::createDouble(order->order_price)
+                    , Util::createLong(order->order_volume)
             );
         }
     };

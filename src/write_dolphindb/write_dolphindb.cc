@@ -130,17 +130,40 @@ namespace co {
                 }
             }
             sort(sub_directors.begin(), sub_directors.end(), [](string a, string b) {return a > b; });
-            for (auto& it : sub_directors) {
-                LOG_INFO << it;
-            }
+//            for (auto& it : sub_directors) {
+//                LOG_INFO << it;
+//            }
             if (!sub_directors.empty()) {
                 string file = sub_directors.front();
-                feeder_reader_.Open(file, "dynamic_data");
-                feeder_reader_.Open(file, "static_contract");
+                LOG_INFO << "mmap open file: " << file;
+                feeder_reader_.Open(file, "data");
+                feeder_reader_.Open(file, "meta");
             }
         }
+        void* data = nullptr;
         while (true) {
-
+            int32_t type = feeder_reader_.Read(&data);
+            if (type == kMemTypeQContract) {
+                if (tick_writer_) {
+                    MemQContract *contract = (MemQContract *) data;
+                    tick_writer_->HandleContract(contract);
+                }
+            } else if (type == kMemTypeQTick) {
+                if (tick_writer_) {
+                    MemQTick *tick = (MemQTick *) data;
+                    tick_writer_->HandleTick(tick);
+                }
+            } else if (type == kMemTypeQOrder) {
+                MemQOrder *order = (MemQOrder *) data;
+                if (order_writer_) {
+                    order_writer_->WriteDate(order);
+                }
+            } else if (type == kMemTypeQKnock) {
+                MemQKnock *knock = (MemQKnock *) data;
+                if (knock_writer_) {
+                    knock_writer_->WriteDate(knock);
+                }
+            }
         }
     }
 
