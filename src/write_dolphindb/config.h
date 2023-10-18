@@ -46,6 +46,9 @@ namespace co {
         inline string mmap() {
             return mmap_;
         }
+        inline string feed_gateway() {
+            return feed_gateway_;
+        }
     protected:
         Config() = default;
         ~Config() = default;
@@ -69,5 +72,6 @@ namespace co {
         int type_;
         string mmap_;
         string wal_file_;
+        string feed_gateway_;
     };
 }  // namespace co

@@ -1,4 +1,6 @@
 
+# v1.0.9 (2023-10-18)
+* 重新编绎libDolphinDBAPI.so库， 增加接收socker的方式
 
 # v1.0.4 (2023-07-10)
 * order的去重加入order_type字段

@@ -67,6 +67,7 @@ namespace co {
         type_ = getInt(address, "type");
         mmap_ = getStr(address, "mmap");
         wal_file_ = getStr(address, "wal_file");
+        feed_gateway_ = getStr(address, "feed_gateway");
 
         stringstream ss;
         ss << "+-------------------- configuration begin --------------------+" << endl;
@@ -75,6 +76,7 @@ namespace co {
             << "  type: " << type_ << endl
             << "  mmap: " << mmap_ << endl
             << "  wal_file: " << wal_file_ << endl
+            << "  feed_gateway: " << feed_gateway_ << endl
             << "dolphindb:      " << endl
             << "  host: " << host_ << endl
             << "  port: " << port_ << endl

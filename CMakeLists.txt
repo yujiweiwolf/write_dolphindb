@@ -28,8 +28,8 @@ foreach(child ${all_sub_index})
     list(APPEND all_lib ${ROOT_DIR}/${child}/lib)
 endforeach()
 
-include_directories(${CMAKE_CURRENT_LIST_DIR}/lib/dolphindb/include lib/openssl-1.0.2u/include ${all_include})
-link_directories(${CMAKE_CURRENT_LIST_DIR}/lib/dolphindb/lib lib/openssl-1.0.2u  ${all_lib})
+include_directories(${CMAKE_CURRENT_LIST_DIR}/lib/dolphindb/include)
+link_directories(${CMAKE_CURRENT_LIST_DIR}/lib/dolphindb/lib ${all_lib})
 
 set(TEST_KNOCK "test_knock")
 set(TEST_FEEDER "test_feeder")
@@ -41,7 +41,7 @@ aux_source_directory (./src/write_dolphindb SRC_LIST)
 
 add_executable(${WRITE_DB} ${SRC_LIST})
 target_link_libraries(${WRITE_DB}
-        libDolphinDBAPI.so broker feeder coral swordfish x stdc++fs yaml-cpp  clickhouse-cpp-lib-static boost_date_time boost_filesystem boost_regex boost_system  boost_chrono boost_log boost_program_options boost_thread boost_iostreams boost_context boost_coroutine z protobuf protobuf-lite sodium zmq ssl crypto iconv pthread dl)
+        libDolphinDBAPI.so feeder coral swordfish x stdc++fs yaml-cpp  clickhouse-cpp-lib-static boost_date_time boost_filesystem boost_regex boost_system  boost_chrono boost_log boost_program_options boost_thread boost_iostreams boost_context boost_coroutine z protobuf protobuf-lite sodium zmq ssl crypto iconv pthread dl)
 
 
 #add_executable(${TEST_KNOCK} src/test_dolphindb/test_knock.cc)
@@ -50,7 +50,7 @@ target_link_libraries(${WRITE_DB}
 
 add_executable(${TEST_FEEDER} src/test_dolphindb/test_feeder.cc)
 target_link_libraries(${TEST_FEEDER}
-        libDolphinDBAPI.so broker coral swordfish x stdc++fs yaml-cpp  clickhouse-cpp-lib-static boost_date_time boost_filesystem boost_regex boost_system  boost_chrono boost_log boost_program_options boost_thread boost_iostreams z protobuf protobuf-lite sodium zmq ssl crypto iconv pthread dl)
+        libDolphinDBAPI.so feeder coral swordfish x stdc++fs yaml-cpp  clickhouse-cpp-lib-static boost_date_time boost_filesystem boost_regex boost_system  boost_chrono boost_log boost_program_options boost_thread boost_iostreams z protobuf protobuf-lite sodium zmq ssl crypto iconv pthread dl)
 
 #add_executable(${TEST_ORDER} src/test_dolphindb/test_order.cc)
 #target_link_libraries(${TEST_ORDER}

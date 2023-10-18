@@ -4,7 +4,7 @@ namespace fs = std::filesystem;
 
 namespace co {
 
-    DolphindbWriter::DolphindbWriter() {
+    DolphindbWriter::DolphindbWriter() : feed_queue_(std::make_shared<StringQueue>()){
     }
 
     DolphindbWriter::~DolphindbWriter() {
@@ -61,13 +61,71 @@ namespace co {
         } else if (type == 2) {
             string wal_file = Config::Instance()->wal_file();
             ReadWal(wal_file);
+        } else if (type == 3) {
+            string feed_gateway = Config::Instance()->feed_gateway();;
+            co::FeedService feeder;
+            if (!feed_gateway.empty()) {
+                feeder.set_queue(feed_queue_);
+                feeder.Init(feed_gateway);
+                feeder.set_disable_index(true);
+                feeder.SubQTick("");
+                feeder.SubQOrder("");
+                feeder.SubQKnock("");
+                feeder.Start();
+                LOG_INFO << "start socket, feed_gateway: " << feed_gateway;
+                ReceiveSocket();
+            }
+        }
+    }
+
+    void DolphindbWriter::ReceiveSocket() {
+        std::string raw;
+        int64_t type = 0;
+        int tick_num = 0;
+        int order_num = 0;
+        int knock_num = 0;
+        while (true) {
+            if (!feed_queue_->Empty()) {
+                type = feed_queue_->Pop(&raw);
+                if (type != 0) {
+                    switch (type) {
+                        case kFBPrefixQTick: {
+                            tick_num++;
+                            if (tick_num % 10000 == 0) {
+                                LOG_INFO << "tick num: " << tick_num;
+                            }
+                            WriteQTick(raw);
+                            break;
+                        }
+                        case kFBPrefixQOrder: {
+                            order_num++;
+                            if (order_num % 10000 == 0) {
+                                LOG_INFO << "order num: " << order_num;
+                            }
+                            WriteQOrder(raw);
+                            break;
+                        }
+                        case kFBPrefixQKnock: {
+                            knock_num++;
+                            if (knock_num % 10000 == 0) {
+                                LOG_INFO << "knock num: " << knock_num;
+                            }
+                            WriteQKnock(raw);
+                            break;
+                        }
+                        default: {
+                            break;
+                        }
+                    }
+                }
+            }
         }
     }
 
     void DolphindbWriter::ReadWal(const string& file) {
-        static int tick_num = 0;
-        static int order_num = 0;
-        static int knock_num = 0;
+        int tick_num = 0;
+        int order_num = 0;
+        int knock_num = 0;
         co::WALReader reader;
         reader.Open(file.c_str());
         while (true) {
@@ -80,7 +138,6 @@ namespace co {
                 case kFBPrefixQTick: {
                     tick_num++;
                     if (tick_num % 10000 == 0) {
-                        // x::Sleep(100);
                         LOG_INFO << "tick num: " << tick_num;
                     }
                     WriteQTick(raw);
@@ -89,7 +146,6 @@ namespace co {
                 case kFBPrefixQOrder: {
                     order_num++;
                     if (order_num % 10000 == 0) {
-                        // x::Sleep(100);
                         LOG_INFO << "order num: " << order_num;
                     }
                     WriteQOrder(raw);
@@ -98,7 +154,6 @@ namespace co {
                 case kFBPrefixQKnock: {
                     knock_num++;
                     if (knock_num % 10000 == 0) {
-                        // x::Sleep(100);
                         LOG_INFO << "knock num: " << knock_num;
                     }
                     WriteQKnock(raw);
@@ -122,6 +177,7 @@ namespace co {
         for (auto& it: all_directors) {
             std::vector<std::string> sub_directors;
             if (!fs::exists(it) || !fs::is_directory(it)) {
+                LOG_ERROR << "dir not exit, " << it;
                 continue;
             }
             for (auto& entry : fs::directory_iterator(it)) {
@@ -141,6 +197,9 @@ namespace co {
             }
         }
         void* data = nullptr;
+        int tick_num = 0;
+        int order_num = 0;
+        int knock_num = 0;
         while (true) {
             int32_t type = feeder_reader_.Read(&data);
             if (type == kMemTypeQContract) {
@@ -152,6 +211,10 @@ namespace co {
                 if (tick_writer_) {
                     MemQTick *tick = (MemQTick *) data;
                     tick_writer_->HandleTick(tick);
+                    order_num++;
+                    if (order_num % 10000 == 0) {
+                        LOG_INFO << "tick num: " << order_num << ", code: " << tick->code << ", timestamp: " << tick->timestamp;
+                    }
                 }
             } else if (type == kMemTypeQOrder) {
                 MemQOrder *order = (MemQOrder *) data;

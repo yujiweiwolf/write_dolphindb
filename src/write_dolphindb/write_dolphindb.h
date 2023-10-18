@@ -29,6 +29,7 @@ namespace co {
     protected:
         void Run();
         void ReadWal(const string& file);
+        void ReceiveSocket();
         void WriteQTick(std::string& raw);
         void WriteQOrder(std::string& raw);
         void WriteQKnock(std::string& raw);
@@ -53,5 +54,7 @@ namespace co {
 
         string knockname_ = "";
         shared_ptr<KnockWriter> knock_writer_;
+
+        std::shared_ptr<StringQueue> feed_queue_ = nullptr;
     };
 }
