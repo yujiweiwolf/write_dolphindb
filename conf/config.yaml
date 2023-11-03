@@ -1,10 +1,10 @@
 data:
-  # 1 读mmap数据，2 读wal文件, 3 读socket
-  type: 3
+  # 1 读mmap数据，2 读wal文件,配置目录, 3 读socket
+  type: 2
   #  mmap: /home/work/sys/develop/feeder_ctp/data
   # mmap: /home/work/sys/develop/feeder_ctp/data;/home/work/sys/develop/feeder_huatai_insight/data
   mmap: /home/work/sys/develop/feeder_huatai_insight/data
-  wal_file: /home/work/sys/develop/write_dolphindb/data/feed_20230425_20230425105537700.stock1.wal
+  wal_file: /home/work/sys/develop/feeder_huatai_insight_v_1.0/data
   feed_gateway: tcp://127.0.0.1:8000
 
 dolphindb:

@@ -57,10 +57,9 @@ namespace co {
         }
 
         if (type == 1) {
-            Run();
+            ReadMMap();
         } else if (type == 2) {
-            string wal_file = Config::Instance()->wal_file();
-            ReadWal(wal_file);
+            ReadWal();
         } else if (type == 3) {
             string feed_gateway = Config::Instance()->feed_gateway();;
             co::FeedService feeder;
@@ -122,54 +121,70 @@ namespace co {
         }
     }
 
-    void DolphindbWriter::ReadWal(const string& file) {
+    void DolphindbWriter::ReadWal() {
+        string dir = Config::Instance()->wal_file();
+        string key = std::to_string(x::RawDate());
+        if (!fs::exists(dir)) {
+            return;
+        }
+        std::vector<std::string> files_;
+        for (const fs::directory_entry& p : fs::directory_iterator(dir)) {
+            std::string filename = p.path().filename().string();
+            if (auto it = filename.find(key); it != filename.npos) {
+                files_.push_back(fs::absolute(p.path()).string());
+            }
+        }
+        std::sort(files_.begin(), files_.end());
         int tick_num = 0;
         int order_num = 0;
         int knock_num = 0;
         co::WALReader reader;
-        reader.Open(file.c_str());
-        while (true) {
-            std::string raw;
-            int64_t type = reader.Read(&raw);
-            if (raw.empty()) {
-                break;
+        for (auto& file : files_) {
+            reader.Open(file.c_str());
+            while (true) {
+                std::string raw;
+                int64_t type = reader.Read(&raw);
+                if (raw.empty()) {
+                    break;
+                }
+                switch (type) {
+                    case kFBPrefixQTick: {
+                        tick_num++;
+                        if (tick_num % 10000 == 0) {
+                            LOG_INFO << "tick num: " << tick_num;
+                        }
+                        WriteQTick(raw);
+                        break;
+                    }
+                    case kFBPrefixQOrder: {
+                        order_num++;
+                        if (order_num % 10000 == 0) {
+                            LOG_INFO << "order num: " << order_num;
+                        }
+                        WriteQOrder(raw);
+                        break;
+                    }
+                    case kFBPrefixQKnock: {
+                        knock_num++;
+                        if (knock_num % 10000 == 0) {
+                            LOG_INFO << "knock num: " << knock_num;
+                        }
+                        WriteQKnock(raw);
+                        break;
+                    }
+                    default: {
+                        break;
+                    }
+                }
             }
-            switch (type) {
-                case kFBPrefixQTick: {
-                    tick_num++;
-                    if (tick_num % 10000 == 0) {
-                        LOG_INFO << "tick num: " << tick_num;
-                    }
-                    WriteQTick(raw);
-                    break;
-                }
-                case kFBPrefixQOrder: {
-                    order_num++;
-                    if (order_num % 10000 == 0) {
-                        LOG_INFO << "order num: " << order_num;
-                    }
-                    WriteQOrder(raw);
-                    break;
-                }
-                case kFBPrefixQKnock: {
-                    knock_num++;
-                    if (knock_num % 10000 == 0) {
-                        LOG_INFO << "knock num: " << knock_num;
-                    }
-                    WriteQKnock(raw);
-                    break;
-                }
-                default: {
-                    break;
-                }
-            }
+            LOG_INFO << "read file: " << file << ", tick_num: " << tick_num
+                     << ", order_num: " << order_num
+                     << ", knock_num: " << knock_num;
         }
-        LOG_INFO << "read file: " << file << ", tick_num: " << tick_num
-                << ", order_num: " << order_num
-                << ", knock_num: " << knock_num;
+
     }
 
-    void DolphindbWriter::Run() {
+    void DolphindbWriter::ReadMMap() {
         x::MMapReader feeder_reader_;
         string mmap = Config::Instance()->mmap();
         std::vector<std::string> all_directors;

@@ -27,8 +27,8 @@ namespace co {
         void Init();
 
     protected:
-        void Run();
-        void ReadWal(const string& file);
+        void ReadMMap();
+        void ReadWal();
         void ReceiveSocket();
         void WriteQTick(std::string& raw);
         void WriteQOrder(std::string& raw);
