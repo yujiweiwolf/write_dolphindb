@@ -32,7 +32,7 @@ namespace co {
             LOG_ERROR << "Failed to  connect  with error: " << ex.what();
             return;
         }
-        int type = Config::Instance()->type();
+
         dbpath_ = Config::Instance()->dbpath();
         tradeknockname_ = Config::Instance()->tradeknockname();
         tickname_ = Config::Instance()->tickname();
@@ -56,6 +56,7 @@ namespace co {
             tradeknock_writer_->SetDBConnection(&conn, dbpath_, tradeknockname_);
         }
 
+        int type = Config::Instance()->type();
         if (type == 1) {
             ReadMMap();
         } else if (type == 2) {
@@ -123,7 +124,7 @@ namespace co {
 
     void DolphindbWriter::ReadWal() {
         string dir = Config::Instance()->wal_file();
-        string key = std::to_string(x::RawDate());
+        string key = Config::Instance()->sub_date();
         if (!fs::exists(dir)) {
             return;
         }
@@ -140,6 +141,7 @@ namespace co {
         int knock_num = 0;
         co::WALReader reader;
         for (auto& file : files_) {
+            LOG_INFO << "read wal: " << file;
             reader.Open(file.c_str());
             while (true) {
                 std::string raw;

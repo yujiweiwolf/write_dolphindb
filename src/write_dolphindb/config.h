@@ -47,7 +47,10 @@ namespace co {
             return mmap_;
         }
         inline string feed_gateway() {
-            return feed_gateway_;
+            return wal_file_;
+        }
+        inline string sub_date() {
+            return sub_date_;
         }
     protected:
         Config() = default;
@@ -73,5 +76,6 @@ namespace co {
         string mmap_;
         string wal_file_;
         string feed_gateway_;
+        string sub_date_;
     };
 }  // namespace co

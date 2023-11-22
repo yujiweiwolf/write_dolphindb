@@ -6,6 +6,8 @@ data:
   mmap: /home/work/sys/develop/feeder_huatai_insight/data
   wal_file: /home/work/sys/develop/feeder_huatai_insight_v_1.0/data
   feed_gateway: tcp://127.0.0.1:8000
+  # 指定日期
+  sub_date: 20231121
 
 dolphindb:
   host: 192.168.101.237

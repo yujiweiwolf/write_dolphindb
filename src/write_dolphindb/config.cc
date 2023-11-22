@@ -68,6 +68,10 @@ namespace co {
         mmap_ = getStr(address, "mmap");
         wal_file_ = getStr(address, "wal_file");
         feed_gateway_ = getStr(address, "feed_gateway");
+        sub_date_ = getStr(address, "sub_date");
+        if (sub_date_.length() < 8) {
+            sub_date_ = std::to_string(x::RawDate());
+        }
 
         stringstream ss;
         ss << "+-------------------- configuration begin --------------------+" << endl;
@@ -77,6 +81,7 @@ namespace co {
             << "  mmap: " << mmap_ << endl
             << "  wal_file: " << wal_file_ << endl
             << "  feed_gateway: " << feed_gateway_ << endl
+            << "  sub_date: " << sub_date_ << endl
             << "dolphindb:      " << endl
             << "  host: " << host_ << endl
             << "  port: " << port_ << endl
