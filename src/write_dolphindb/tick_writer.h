@@ -10,9 +10,20 @@ namespace co {
         void WriteDate(std::string& raw) {
             if (write_step_ == 0) {
                 write_step_++;
+                bool exit_db_flag = false;
+                {
+                    string script;
+                    script += "existsDatabase(\"" + dbpath_ + "\");";
+                    TableSP result = conn_->run(script);
+                    if (result->getString() == "0") {
+                        LOG_INFO << "not exit Database: " << dbpath_;
+                    } else {
+                        LOG_INFO << "exit Database: " << dbpath_;
+                        exit_db_flag = true;
+                    }
+                }
                 string script;
                 script += "existsTable(\"" + dbpath_ + "\", `" + tablename_ + ");";
-                LOG_INFO << script;
                 TableSP result = conn_->run(script);
                 LOG_INFO << dbpath_ << ", " << tablename_ << ", exist result: " << result->getString();
                 if (result->getString() == "0") {
@@ -21,10 +32,15 @@ namespace co {
                     conn_->upload("mt", table);
                     script += "login(`" + userId_ + ",`" + password_ + ");";
                     script += "dbPath = \"" + dbpath_ + "\";";
-                    script += "db1 = database("", VALUE, 2023.01.01..2023.12.31);";
-                    script += "db2 = database(\"\", HASH,[STRING,10]);";
-                    script += "tableName = `" + tablename_ + ";";
-                    script += "db = database(dbPath,COMPO,[db1,db2],engine=\"TSDB\");";
+                    if (!exit_db_flag) {
+                        script += "db1 = database("", VALUE, 2023.01.01..2023.12.31);";
+                        script += "db2 = database(\"\", HASH,[STRING,10]);";
+                        script += "tableName = `" + tablename_ + ";";
+                        script += "db = database(dbPath,COMPO,[db1,db2],engine=\"TSDB\");";
+                    } else {
+                        script += "tableName = `" + tablename_ + ";";
+                        script += "db = database(dbPath);";
+                    }
                     script += "date = db.createPartitionedTable(mt,tableName, partitionColumns=`date`code,sortColumns=`code`date`time,keepDuplicates=FIRST);";
                     script += "tradTable=database(dbPath).loadTable(tableName).append!(mt);";
                     TableSP result = conn_->run(script);
@@ -55,9 +71,20 @@ namespace co {
             }
             if (write_step_ == 0) {
                 write_step_++;
+                bool exit_db_flag = false;
+                {
+                    string script;
+                    script += "existsDatabase(\"" + dbpath_ + "\");";
+                    TableSP result = conn_->run(script);
+                    if (result->getString() == "0") {
+                        LOG_INFO << "not exit Database: " << dbpath_;
+                    } else {
+                        LOG_INFO << "exit Database: " << dbpath_;
+                        exit_db_flag = true;
+                    }
+                }
                 string script;
                 script += "existsTable(\"" + dbpath_ + "\", `" + tablename_ + ");";
-                LOG_INFO << script;
                 TableSP result = conn_->run(script);
                 LOG_INFO << dbpath_ << ", " << tablename_ << ", exist result: " << result->getString();
                 if (result->getString() == "0") {
@@ -66,10 +93,15 @@ namespace co {
                     conn_->upload("mt", table);
                     script += "login(`" + userId_ + ",`" + password_ + ");";
                     script += "dbPath = \"" + dbpath_ + "\";";
-                    script += "db1 = database("", VALUE, 2023.01.01..2023.12.31);";
-                    script += "db2 = database(\"\", HASH,[STRING,10]);";
-                    script += "tableName = `" + tablename_ + ";";
-                    script += "db = database(dbPath,COMPO,[db1,db2],engine=\"TSDB\");";
+                    if (!exit_db_flag) {
+                        script += "db1 = database("", VALUE, 2023.01.01..2023.12.31);";
+                        script += "db2 = database(\"\", HASH,[STRING,10]);";
+                        script += "tableName = `" + tablename_ + ";";
+                        script += "db = database(dbPath,COMPO,[db1,db2],engine=\"TSDB\");";
+                    } else {
+                        script += "tableName = `" + tablename_ + ";";
+                        script += "db = database(dbPath);";
+                    }
                     script += "date = db.createPartitionedTable(mt,tableName, partitionColumns=`date`code,sortColumns=`code`date`time,keepDuplicates=FIRST);";
                     script += "tradTable=database(dbPath).loadTable(tableName).append!(mt);";
                     TableSP result = conn_->run(script);
@@ -458,12 +490,12 @@ namespace co {
                 columnVecs[index++]->set(i, Util::createDouble(contract->multiple));
                 columnVecs[index++]->set(i, Util::createDouble(contract->price_step));
 
-                columnVecs[index++]->set(i, Util::createInt(contract->create_date));
+                columnVecs[index++]->set(i, Util::createInt(0));
                 columnVecs[index++]->set(i, Util::createInt(contract->list_date));
                 columnVecs[index++]->set(i, Util::createInt(contract->expire_date));
-                columnVecs[index++]->set(i, Util::createInt(contract->start_settle_date));
-                columnVecs[index++]->set(i, Util::createInt(contract->end_settle_date));
-                columnVecs[index++]->set(i, Util::createInt(contract->exercise_date));
+                columnVecs[index++]->set(i, Util::createInt(0));
+                columnVecs[index++]->set(i, Util::createInt(0));
+                columnVecs[index++]->set(i, Util::createInt(0));
 
                 columnVecs[index++]->set(i, Util::createDouble(contract->exercise_price));
                 columnVecs[index++]->set(i, Util::createChar(contract->cp_flag));
@@ -565,12 +597,12 @@ namespace co {
                     ,Util::createDouble(contract->multiple)
                     ,Util::createDouble(contract->price_step)
 
-                    ,Util::createInt(contract->create_date)
+                    ,Util::createInt(0)
                     ,Util::createInt(contract->list_date)
                     ,Util::createInt(contract->expire_date)
-                    ,Util::createInt(contract->start_settle_date)
-                    ,Util::createInt(contract->end_settle_date)
-                    ,Util::createInt(contract->exercise_date)
+                    ,Util::createInt(0)
+                    ,Util::createInt(0)
+                    ,Util::createInt(0)
 
                     ,Util::createDouble(contract->exercise_price)
                     ,Util::createChar(contract->cp_flag)

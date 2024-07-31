@@ -1,5 +1,6 @@
 // Copyright 2020 Fancapital Inc.  All rights reserved.
 #pragma once
+#include <mutex>
 #include <string>
 #include "feeder/feeder.h"
 
@@ -37,6 +38,9 @@ namespace co {
         inline string knockname() {
             return knockname_;
         }
+        inline string etfiopvkname() {
+            return etfiopvkname_;
+        }
         inline int type() {
             return type_;
         }
@@ -71,6 +75,7 @@ namespace co {
         string tickname_;
         string ordername_;
         string knockname_;
+        string etfiopvkname_;
 
         int type_;
         string mmap_;

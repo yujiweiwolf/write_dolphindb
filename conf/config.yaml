@@ -1,24 +1,26 @@
 data:
   # 1 读mmap数据，2 读wal文件,配置目录, 3 读socket
-  type: 2
+  type: 1
   #  mmap: /home/work/sys/develop/feeder_ctp/data
   # mmap: /home/work/sys/develop/feeder_ctp/data;/home/work/sys/develop/feeder_huatai_insight/data
-  mmap: /home/work/sys/develop/feeder_huatai_insight/data
+  # mmap: /home/work/sys/develop/feeder_huatai_insight/data
+  mmap: ../data
   wal_file: /home/work/sys/develop/feeder_huatai_insight_v_1.0/data
   feed_gateway: tcp://127.0.0.1:8000
-  # 指定日期
-  sub_date: 20231121
+  # 指定日期, 或设置为0
+  sub_date: 0
 
 dolphindb:
   host: 192.168.101.237
   port: 8848
   userId: admin
   password: .123456
-  dbpath: dfs://SAMPLE_TRDDB
+  dbpath: dfs://quota
   tradeknockname: TradeKnockTable
-  tickname: QTickTable
-  ordername: QOrderTable
-  knockname: QKnockTable
+  tickname: qtick
+  ordername: qorder
+  knockname: qknock
+  etfiopvkname: qetfiopv
 
 
 

@@ -16,6 +16,7 @@
 #include "order_writer.h"
 #include "knock_writer.h"
 #include "tradeknock_writer.h"
+#include "etfiopv_writer.h"
 
 namespace co {
     using namespace std;
@@ -54,6 +55,9 @@ namespace co {
 
         string knockname_ = "";
         shared_ptr<KnockWriter> knock_writer_;
+
+        string etfiopvkname_ = "";
+        shared_ptr<EtfIopvWriter> etfiopv_writer_;
 
         std::shared_ptr<StringQueue> feed_queue_ = nullptr;
     };

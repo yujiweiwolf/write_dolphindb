@@ -62,6 +62,7 @@ namespace co {
         tickname_ = getStr(dolphindb, "tickname");
         ordername_ = getStr(dolphindb, "ordername");
         knockname_ = getStr(dolphindb, "knockname");
+        etfiopvkname_ = getStr(dolphindb, "etfiopvkname");
 
         auto address = root["data"];
         type_ = getInt(address, "type");
@@ -91,7 +92,8 @@ namespace co {
             << "  tradeknockname: " << tradeknockname_ << endl
             << "  tickname: " << tickname_ << endl
             << "  ordername: " << ordername_ << endl
-            << "  knockname: " << knockname_ << endl;
+            << "  knockname: " << knockname_ << endl
+            << "  etfiopvkname: " << etfiopvkname_ << endl;
         ss << "+-------------------- configuration end   --------------------+";
         LOG_INFO << endl << ss.str();
     }

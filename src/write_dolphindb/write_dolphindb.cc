@@ -38,6 +38,7 @@ namespace co {
         tickname_ = Config::Instance()->tickname();
         ordername_ = Config::Instance()->ordername();
         knockname_ = Config::Instance()->knockname();
+        etfiopvkname_ = Config::Instance()->etfiopvkname();
 
         if (tickname_.length() > 0) {
             tick_writer_ = std::make_shared<TickWriter>();
@@ -54,6 +55,10 @@ namespace co {
         if (tradeknockname_.length() > 0) {
             tradeknock_writer_ = std::make_shared<TradeKnockWriter>();
             tradeknock_writer_->SetDBConnection(&conn, dbpath_, tradeknockname_);
+        }
+        if (etfiopvkname_.length() > 0) {
+            etfiopv_writer_ = std::make_shared<EtfIopvWriter>();
+            etfiopv_writer_->SetDBConnection(&conn, dbpath_, etfiopvkname_);
         }
 
         int type = Config::Instance()->type();
@@ -213,12 +218,12 @@ namespace co {
                 feeder_reader_.Open(file, "meta");
             }
         }
-        void* data = nullptr;
+        const void* data = nullptr;
         int tick_num = 0;
         int order_num = 0;
         int knock_num = 0;
         while (true) {
-            int32_t type = feeder_reader_.Read(&data);
+            int32_t type = feeder_reader_.Next(&data);
             if (type == kMemTypeQContract) {
                 if (tick_writer_) {
                     MemQContract *contract = (MemQContract *) data;
@@ -242,6 +247,11 @@ namespace co {
                 MemQKnock *knock = (MemQKnock *) data;
                 if (knock_writer_) {
                     knock_writer_->WriteDate(knock);
+                }
+            } else if (type == kMemTypeQEtfIopv) {
+                MemQEtfIopv *iopv = (MemQEtfIopv *) data;
+                if (etfiopv_writer_) {
+                    etfiopv_writer_->WriteDate(iopv);
                 }
             }
         }
