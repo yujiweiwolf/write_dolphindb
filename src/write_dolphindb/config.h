@@ -38,8 +38,8 @@ namespace co {
         inline string knockname() {
             return knockname_;
         }
-        inline string etfiopvkname() {
-            return etfiopvkname_;
+        inline string etfiopvname() {
+            return etfiopvname_;
         }
         inline int type() {
             return type_;
@@ -53,7 +53,7 @@ namespace co {
         inline string feed_gateway() {
             return wal_file_;
         }
-        inline string sub_date() {
+        inline int sub_date() {
             return sub_date_;
         }
     protected:
@@ -75,12 +75,12 @@ namespace co {
         string tickname_;
         string ordername_;
         string knockname_;
-        string etfiopvkname_;
+        string etfiopvname_;
 
         int type_;
         string mmap_;
         string wal_file_;
         string feed_gateway_;
-        string sub_date_;
+        int sub_date_;
     };
 }  // namespace co

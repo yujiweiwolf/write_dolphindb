@@ -1,5 +1,5 @@
 # cmake_minimum_required(VERSION <specify CMake version here>)
-cmake_minimum_required(VERSION 3.19)
+cmake_minimum_required(VERSION 3.16)
 project(write_dolphindb)
 
 #Release Debug
@@ -42,7 +42,6 @@ aux_source_directory (./src/write_dolphindb SRC_LIST)
 add_executable(${WRITE_DB} ${SRC_LIST})
 target_link_libraries(${WRITE_DB}
         libDolphinDBAPI.so feeder coral swordfish x stdc++fs yaml-cpp  clickhouse-cpp-lib-static boost_date_time boost_filesystem boost_regex boost_system  boost_chrono boost_log boost_program_options boost_thread boost_iostreams boost_context boost_coroutine z protobuf protobuf-lite sodium zmq ssl crypto iconv pthread dl)
-
 
 #add_executable(${TEST_KNOCK} src/test_dolphindb/test_knock.cc)
 #target_link_libraries(${TEST_KNOCK}

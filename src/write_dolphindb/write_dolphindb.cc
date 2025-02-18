@@ -38,7 +38,7 @@ namespace co {
         tickname_ = Config::Instance()->tickname();
         ordername_ = Config::Instance()->ordername();
         knockname_ = Config::Instance()->knockname();
-        etfiopvkname_ = Config::Instance()->etfiopvkname();
+        etfiopvname_ = Config::Instance()->etfiopvname();
 
         if (tickname_.length() > 0) {
             tick_writer_ = std::make_shared<TickWriter>();
@@ -56,9 +56,9 @@ namespace co {
             tradeknock_writer_ = std::make_shared<TradeKnockWriter>();
             tradeknock_writer_->SetDBConnection(&conn, dbpath_, tradeknockname_);
         }
-        if (etfiopvkname_.length() > 0) {
+        if (etfiopvname_.length() > 0) {
             etfiopv_writer_ = std::make_shared<EtfIopvWriter>();
-            etfiopv_writer_->SetDBConnection(&conn, dbpath_, etfiopvkname_);
+            etfiopv_writer_->SetDBConnection(&conn, dbpath_, etfiopvname_);
         }
 
         int type = Config::Instance()->type();
@@ -129,8 +129,9 @@ namespace co {
 
     void DolphindbWriter::ReadWal() {
         string dir = Config::Instance()->wal_file();
-        string key = Config::Instance()->sub_date();
+        string key = std::to_string(Config::Instance()->sub_date());
         if (!fs::exists(dir)) {
+            LOG_ERROR << dir << "not exit";
             return;
         }
         std::vector<std::string> files_;
@@ -192,67 +193,101 @@ namespace co {
     }
 
     void DolphindbWriter::ReadMMap() {
-        x::MMapReader feeder_reader_;
-        string mmap = Config::Instance()->mmap();
-        std::vector<std::string> all_directors;
-        x::Split(&all_directors, mmap, ";", true);
-        for (auto& it: all_directors) {
-            std::vector<std::string> sub_directors;
-            if (!fs::exists(it) || !fs::is_directory(it)) {
-                LOG_ERROR << "dir not exit, " << it;
-                continue;
-            }
-            for (auto& entry : fs::directory_iterator(it)) {
-                if (fs::is_directory(entry)) {
-                    sub_directors.push_back(entry.path().string());
-                }
-            }
-            sort(sub_directors.begin(), sub_directors.end(), [](string a, string b) {return a > b; });
-//            for (auto& it : sub_directors) {
-//                LOG_INFO << it;
-//            }
-            if (!sub_directors.empty()) {
-                string file = sub_directors.front();
+        int64_t sub_date = Config::Instance()->sub_date();
+        string mmap_file = Config::Instance()->mmap();
+        std::vector<std::string> all_file;
+        x::Split(&all_file, mmap_file, ";");
+        for (auto& file : all_file) {
+            if (fs::exists(file)) {
                 LOG_INFO << "mmap open file: " << file;
+                x::MMapReader feeder_reader_;
                 feeder_reader_.Open(file, "data");
                 feeder_reader_.Open(file, "meta");
-            }
-        }
-        const void* data = nullptr;
-        int tick_num = 0;
-        int order_num = 0;
-        int knock_num = 0;
-        while (true) {
-            int32_t type = feeder_reader_.Next(&data);
-            if (type == kMemTypeQContract) {
-                if (tick_writer_) {
-                    MemQContract *contract = (MemQContract *) data;
-                    tick_writer_->HandleContract(contract);
-                }
-            } else if (type == kMemTypeQTick) {
-                if (tick_writer_) {
-                    MemQTick *tick = (MemQTick *) data;
-                    tick_writer_->HandleTick(tick);
-                    order_num++;
-                    if (order_num % 10000 == 0) {
-                        LOG_INFO << "tick num: " << order_num << ", code: " << tick->code << ", timestamp: " << tick->timestamp;
+                const void* data = nullptr;
+                int tick_num = 0;
+                int order_num = 0;
+                int knock_num = 0;
+                int iopv_num = 0;
+                int64_t start_timestamp = 0;
+                while (true) {
+                    int32_t type = feeder_reader_.Next(&data);
+                    // LOG_INFO << type;
+                    if (type == kMemTypeQTickHead) {
+                        if (tick_writer_) {
+                            MemQTickHead *contract = (MemQTickHead*) data;
+                            // LOG_INFO << ToString(contract);
+                            int64_t date = 0;
+                            if (contract->date != 0) {
+                                date = contract->date;
+                            } else {
+                                date = contract->timestamp / 1000000000LL;
+                            }
+                            // LOG_INFO << date << ",  " << sub_date;
+                            if (date == sub_date) {
+                                tick_writer_->HandleQTickHead(contract);
+                                if (start_timestamp == 0) {
+                                    start_timestamp = contract->timestamp;
+                                }
+                                // 时间超过了一天
+                                if (start_timestamp > 0) {
+                                    if (x::SubRawDateTime(contract->timestamp, start_timestamp) > 24 * 3600 * 1000) {
+                                        LOG_INFO << "finish, timestamp: " << contract->timestamp << ", start_timestamp: " << start_timestamp;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    } else if (type == kMemTypeQTickBody) {
+                        if (tick_writer_) {
+                            MemQTickBody *tick = (MemQTickBody*) data;
+                            // int64_t date = tick->timestamp / 1000000000LL;
+                            if (start_timestamp > 0 && tick->timestamp >= start_timestamp) {
+                                tick_writer_->HandleTick(tick);
+                                tick_num++;
+                                if (tick_num % 10000 == 0) {
+                                    LOG_INFO << "tick num: " << tick_num << ", code: " << tick->code << ", timestamp: " << tick->timestamp;
+                                }
+                            }
+                        }
+                    } else if (type == kMemTypeQOrder) {
+                        MemQOrder *order = (MemQOrder *) data;
+                        int64_t date = order->timestamp / 1000000000LL;
+                        if (order_writer_ && date == sub_date) {
+                            order_num++;
+                            order_writer_->WriteDate(order);
+                        }
+                    } else if (type == kMemTypeQKnock) {
+                        MemQKnock *knock = (MemQKnock *) data;
+                        int64_t date = knock->timestamp / 1000000000LL;
+                        if (knock_writer_ && date == sub_date) {
+                            knock_num++;
+                            knock_writer_->WriteDate(knock);
+                        }
+                    } else if (type == kMemTypeQEtfIopvHead) {
+                        MemQEtfIopvHead *head = (MemQEtfIopvHead *) data;
+                        int64_t date = head->timestamp / 1000000000LL;
+                        // LOG_INFO << ToString(head);
+                        if (etfiopv_writer_ && date == sub_date) {
+                            etfiopv_writer_->HandleQTickHead(head);
+                        }
+                    } else if (type == kMemTypeQEtfIopvBody) {
+                        MemQEtfIopvBody *body = (MemQEtfIopvBody *) data;
+                        int64_t date = body->timestamp / 1000000000LL;
+                        // LOG_INFO << ToString(body);
+                        if (etfiopv_writer_&& date == sub_date) {
+                            etfiopv_writer_->WriteDate(body);
+                            iopv_num++;
+                        }
+                    } else if (type == 0) {
+                        LOG_INFO << "read over, tick_num: " << tick_num
+                                << ", order_num: " << order_num
+                                << ", knock_num: " << knock_num
+                                << ", iopv_num: " << iopv_num;
+                        break;
                     }
                 }
-            } else if (type == kMemTypeQOrder) {
-                MemQOrder *order = (MemQOrder *) data;
-                if (order_writer_) {
-                    order_writer_->WriteDate(order);
-                }
-            } else if (type == kMemTypeQKnock) {
-                MemQKnock *knock = (MemQKnock *) data;
-                if (knock_writer_) {
-                    knock_writer_->WriteDate(knock);
-                }
-            } else if (type == kMemTypeQEtfIopv) {
-                MemQEtfIopv *iopv = (MemQEtfIopv *) data;
-                if (etfiopv_writer_) {
-                    etfiopv_writer_->WriteDate(iopv);
-                }
+            } else {
+                LOG_ERROR << file << " not exit";
             }
         }
     }

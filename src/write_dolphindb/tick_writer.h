@@ -10,19 +10,16 @@ namespace co {
         void WriteDate(std::string& raw) {
             if (write_step_ == 0) {
                 write_step_++;
-                bool exit_db_flag = false;
-                {
-                    string script;
-                    script += "existsDatabase(\"" + dbpath_ + "\");";
-                    TableSP result = conn_->run(script);
-                    if (result->getString() == "0") {
-                        LOG_INFO << "not exit Database: " << dbpath_;
-                    } else {
-                        LOG_INFO << "exit Database: " << dbpath_;
-                        exit_db_flag = true;
-                    }
-                }
                 string script;
+                bool exit_database = false;
+                script += "existsDatabase(\"" + dbpath_ + "\");";
+                TableSP db_result = conn_->run(script);
+                if (db_result->getString() == "1") {
+                    exit_database = true;
+                }
+                LOG_INFO << script << ", exist result: " << db_result->getString();
+                script = "";
+
                 script += "existsTable(\"" + dbpath_ + "\", `" + tablename_ + ");";
                 TableSP result = conn_->run(script);
                 LOG_INFO << dbpath_ << ", " << tablename_ << ", exist result: " << result->getString();
@@ -32,14 +29,13 @@ namespace co {
                     conn_->upload("mt", table);
                     script += "login(`" + userId_ + ",`" + password_ + ");";
                     script += "dbPath = \"" + dbpath_ + "\";";
-                    if (!exit_db_flag) {
-                        script += "db1 = database("", VALUE, 2023.01.01..2023.12.31);";
-                        script += "db2 = database(\"\", HASH,[STRING,10]);";
-                        script += "tableName = `" + tablename_ + ";";
-                        script += "db = database(dbPath,COMPO,[db1,db2],engine=\"TSDB\");";
-                    } else {
-                        script += "tableName = `" + tablename_ + ";";
+                    script += "db1 = database("", VALUE, 2023.01.01..2023.12.31);";
+                    script += "db2 = database(\"\", HASH,[STRING,10]);";
+                    script += "tableName = `" + tablename_ + ";";
+                    if (exit_database) {
                         script += "db = database(dbPath);";
+                    } else {
+                        script += "db = database(dbPath,COMPO,[db1,db2],engine=\"TSDB\");";
                     }
                     script += "date = db.createPartitionedTable(mt,tableName, partitionColumns=`date`code,sortColumns=`code`date`time,keepDuplicates=FIRST);";
                     script += "tradTable=database(dbPath).loadTable(tableName).append!(mt);";
@@ -60,30 +56,27 @@ namespace co {
             }
         }
 
-        void HandleContract(MemQContract* data) {
-            all_contract_.insert(std::make_pair(data->code, *data));
+        void HandleQTickHead(MemQTickHead* data) {
+            all_head_.insert(std::make_pair(data->code, *data));
         }
 
-        void HandleTick(MemQTick* data) {
-            auto it = all_contract_.find(data->code);
-            if (it == all_contract_.end()) {
+        void HandleTick(MemQTickBody* data) {
+            auto it = all_head_.find(data->code);
+            if (it == all_head_.end()) {
                 return;
             }
             if (write_step_ == 0) {
                 write_step_++;
-                bool exit_db_flag = false;
-                {
-                    string script;
-                    script += "existsDatabase(\"" + dbpath_ + "\");";
-                    TableSP result = conn_->run(script);
-                    if (result->getString() == "0") {
-                        LOG_INFO << "not exit Database: " << dbpath_;
-                    } else {
-                        LOG_INFO << "exit Database: " << dbpath_;
-                        exit_db_flag = true;
-                    }
-                }
                 string script;
+                bool exit_database = false;
+                script += "existsDatabase(\"" + dbpath_ + "\");";
+                TableSP db_result = conn_->run(script);
+                if (db_result->getString() == "1") {
+                    exit_database = true;
+                }
+                LOG_INFO << script << ", exist result: " << db_result->getString();
+                script = "";
+
                 script += "existsTable(\"" + dbpath_ + "\", `" + tablename_ + ");";
                 TableSP result = conn_->run(script);
                 LOG_INFO << dbpath_ << ", " << tablename_ << ", exist result: " << result->getString();
@@ -93,14 +86,13 @@ namespace co {
                     conn_->upload("mt", table);
                     script += "login(`" + userId_ + ",`" + password_ + ");";
                     script += "dbPath = \"" + dbpath_ + "\";";
-                    if (!exit_db_flag) {
-                        script += "db1 = database("", VALUE, 2023.01.01..2023.12.31);";
-                        script += "db2 = database(\"\", HASH,[STRING,10]);";
-                        script += "tableName = `" + tablename_ + ";";
-                        script += "db = database(dbPath,COMPO,[db1,db2],engine=\"TSDB\");";
-                    } else {
-                        script += "tableName = `" + tablename_ + ";";
+                    script += "db1 = database("", VALUE, 2023.01.01..2023.12.31);";
+                    script += "db2 = database(\"\", HASH,[STRING,10]);";
+                    script += "tableName = `" + tablename_ + ";";
+                    if (exit_database) {
                         script += "db = database(dbPath);";
+                    } else {
+                        script += "db = database(dbPath,COMPO,[db1,db2],engine=\"TSDB\");";
                     }
                     script += "date = db.createPartitionedTable(mt,tableName, partitionColumns=`date`code,sortColumns=`code`date`time,keepDuplicates=FIRST);";
                     script += "tradTable=database(dbPath).loadTable(tableName).append!(mt);";
@@ -394,7 +386,7 @@ namespace co {
             );
         }
 
-        TableSP createTable(MemQTick* data, MemQContract* contract) {
+        TableSP createTable(MemQTickBody* data, MemQTickHead* contract) {
             vector<string> colNames = { "code","date","time","src","state",
                                         "bp0","bp1","bp2","bp3","bp4","bp5","bp6","bp7","bp8","bp9",
                                         "bv0","bv1","bv2","bv3","bv4","bv5","bv6","bv7","bv8","bv9",
@@ -474,8 +466,8 @@ namespace co {
                 columnVecs[index++]->set(i, Util::createDouble(data->new_ask_amount));
 
                 columnVecs[index++]->set(i, Util::createDouble(data->open));
-                columnVecs[index++]->set(i, Util::createDouble(data->close));
-                columnVecs[index++]->set(i, Util::createDouble(data->settle));
+                columnVecs[index++]->set(i, Util::createDouble(contract->close));
+                columnVecs[index++]->set(i, Util::createDouble(contract->settle));
                 columnVecs[index++]->set(i, Util::createLong(data->open_interest));
 
                 columnVecs[index++]->set(i, Util::createChar(contract->dtype));
@@ -505,7 +497,7 @@ namespace co {
             return table;
         }
 
-        void InsertDate(MemQTick* data, MemQContract* contract) {
+        void InsertDate(MemQTickBody* data, MemQTickHead* contract) {
             int64_t timestamp = data->timestamp;
             int64_t date = timestamp / 1000000000LL;
             int year = date / 10000;
@@ -581,8 +573,8 @@ namespace co {
                     ,Util::createDouble(data->new_ask_amount)
 
                     ,Util::createDouble(data->open)
-                    ,Util::createDouble(data->close)
-                    ,Util::createDouble(data->settle)
+                    ,Util::createDouble(contract->close)
+                    ,Util::createDouble(contract->settle)
                     ,Util::createLong(data->open_interest)
 
                     ,Util::createChar(contract->dtype)
@@ -611,6 +603,6 @@ namespace co {
             );
         }
     private:
-        unordered_map<string, MemQContract> all_contract_;
+        unordered_map<string, MemQTickHead> all_head_;
     };
 }

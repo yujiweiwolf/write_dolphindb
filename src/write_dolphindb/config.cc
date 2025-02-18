@@ -62,16 +62,16 @@ namespace co {
         tickname_ = getStr(dolphindb, "tickname");
         ordername_ = getStr(dolphindb, "ordername");
         knockname_ = getStr(dolphindb, "knockname");
-        etfiopvkname_ = getStr(dolphindb, "etfiopvkname");
+        etfiopvname_ = getStr(dolphindb, "etfiopvname");
 
         auto address = root["data"];
         type_ = getInt(address, "type");
         mmap_ = getStr(address, "mmap");
         wal_file_ = getStr(address, "wal_file");
         feed_gateway_ = getStr(address, "feed_gateway");
-        sub_date_ = getStr(address, "sub_date");
-        if (sub_date_.length() < 8) {
-            sub_date_ = std::to_string(x::RawDate());
+        sub_date_ = getInt(address, "sub_date");
+        if (sub_date_ <= 0) {
+            sub_date_ = x::RawDate();
         }
 
         stringstream ss;
@@ -93,7 +93,7 @@ namespace co {
             << "  tickname: " << tickname_ << endl
             << "  ordername: " << ordername_ << endl
             << "  knockname: " << knockname_ << endl
-            << "  etfiopvkname: " << etfiopvkname_ << endl;
+            << "  etfiopvname: " << etfiopvname_ << endl;
         ss << "+-------------------- configuration end   --------------------+";
         LOG_INFO << endl << ss.str();
     }

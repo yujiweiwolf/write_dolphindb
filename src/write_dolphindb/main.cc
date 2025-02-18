@@ -10,7 +10,7 @@ using namespace std;
 using namespace co;
 namespace po = boost::program_options;
 
-const string kVersion = "v1.0.12";
+const string kVersion = "v1.0.13";
 
 int main(int argc, char* argv[]) {
     po::options_description desc("[Broker Server] Usage");
@@ -37,6 +37,17 @@ int main(int argc, char* argv[]) {
         return 0;
     }
     try {
+//        int64_t start_timestamp = 20250217101332750;
+//        int64_t end_timestamp   = 20250218101332751;
+//        int64_t diff = x::SubRawDateTime(end_timestamp, start_timestamp);
+//        if (diff > 24 * 3600 * 1000) {
+//            LOG_INFO << "finish, end_timestamp: " << end_timestamp << ", start_timestamp: " << start_timestamp << ", " << diff;
+//            return 0;
+//        } else {
+//            LOG_INFO << "finish";
+//            return 0;
+//        }
+
         LOG_INFO << "kVersion: " <<kVersion;
         Config::Instance();
         shared_ptr<DolphindbWriter> db_writer = make_shared<DolphindbWriter>();

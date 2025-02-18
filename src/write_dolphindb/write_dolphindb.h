@@ -56,7 +56,7 @@ namespace co {
         string knockname_ = "";
         shared_ptr<KnockWriter> knock_writer_;
 
-        string etfiopvkname_ = "";
+        string etfiopvname_ = "";
         shared_ptr<EtfIopvWriter> etfiopv_writer_;
 
         std::shared_ptr<StringQueue> feed_queue_ = nullptr;

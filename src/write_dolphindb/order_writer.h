@@ -11,6 +11,15 @@ namespace co {
             if (write_step_ == 0) {
                 write_step_++;
                 string script;
+                bool exit_database = false;
+                script += "existsDatabase(\"" + dbpath_ + "\");";
+                TableSP db_result = conn_->run(script);
+                if (db_result->getString() == "1") {
+                    exit_database = true;
+                }
+                LOG_INFO << script << ", exist result: " << db_result->getString();
+                script = "";
+
                 script += "existsTable(\"" + dbpath_ + "\", `" + tablename_ + ");";
                 LOG_INFO << script;
                 TableSP result = conn_->run(script);
@@ -24,7 +33,11 @@ namespace co {
                     script += "db1 = database("", VALUE, 2023.01.01..2023.12.31);";
                     script += "db2 = database(\"\", HASH,[STRING,10]);";
                     script += "tableName = `" + tablename_ + ";";
-                    script += "db = database(dbPath,COMPO,[db1,db2],engine=\"TSDB\");";
+                    if (exit_database) {
+                        script += "db = database(dbPath);";
+                    } else {
+                        script += "db = database(dbPath,COMPO,[db1,db2],engine=\"TSDB\");";
+                    }
                     script += "date = db.createPartitionedTable(mt,tableName, partitionColumns=`date`code,sortColumns=`code`order_no`order_type`date,keepDuplicates=FIRST,sortKeyMappingFunction=[hashBucket{,499}, hashBucket{,1}, hashBucket{, 1}]);";
                     script += "tradTable=database(dbPath).loadTable(tableName).append!(mt);";
                     TableSP result = conn_->run(script);
@@ -48,6 +61,15 @@ namespace co {
             if (write_step_ == 0) {
                 write_step_++;
                 string script;
+                bool exit_database = false;
+                script += "existsDatabase(\"" + dbpath_ + "\");";
+                TableSP db_result = conn_->run(script);
+                if (db_result->getString() == "1") {
+                    exit_database = true;
+                }
+                LOG_INFO << script << ", exist result: " << db_result->getString();
+                script = "";
+
                 script += "existsTable(\"" + dbpath_ + "\", `" + tablename_ + ");";
                 LOG_INFO << script;
                 TableSP result = conn_->run(script);
@@ -61,7 +83,11 @@ namespace co {
                     script += "db1 = database("", VALUE, 2023.01.01..2023.12.31);";
                     script += "db2 = database(\"\", HASH,[STRING,10]);";
                     script += "tableName = `" + tablename_ + ";";
-                    script += "db = database(dbPath,COMPO,[db1,db2],engine=\"TSDB\");";
+                    if (exit_database) {
+                        script += "db = database(dbPath);";
+                    } else {
+                        script += "db = database(dbPath,COMPO,[db1,db2],engine=\"TSDB\");";
+                    }
                     script += "date = db.createPartitionedTable(mt,tableName, partitionColumns=`date`code,sortColumns=`code`order_no`order_type`date,keepDuplicates=FIRST,sortKeyMappingFunction=[hashBucket{,499}, hashBucket{,1}, hashBucket{, 1}]);";
                     script += "tradTable=database(dbPath).loadTable(tableName).append!(mt);";
                     TableSP result = conn_->run(script);
