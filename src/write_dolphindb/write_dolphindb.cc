@@ -211,7 +211,6 @@ namespace co {
                 int64_t start_timestamp = 0;
                 while (true) {
                     int32_t type = feeder_reader_.Next(&data);
-                    // LOG_INFO << type;
                     if (type == kMemTypeQTickHead) {
                         if (tick_writer_) {
                             MemQTickHead *contract = (MemQTickHead*) data;
@@ -228,13 +227,9 @@ namespace co {
                                 if (start_timestamp == 0) {
                                     start_timestamp = contract->timestamp;
                                 }
-                                // 时间超过了一天
-                                if (start_timestamp > 0) {
-                                    if (x::SubRawDateTime(contract->timestamp, start_timestamp) > 24 * 3600 * 1000) {
-                                        LOG_INFO << "finish, timestamp: " << contract->timestamp << ", start_timestamp: " << start_timestamp;
-                                        break;
-                                    }
-                                }
+                            } else if (date > sub_date){
+                                LOG_INFO << "finish, timestamp: " << contract->timestamp << ", start_timestamp: " << start_timestamp;
+                                break;
                             }
                         }
                     } else if (type == kMemTypeQTickBody) {

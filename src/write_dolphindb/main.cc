@@ -10,7 +10,7 @@ using namespace std;
 using namespace co;
 namespace po = boost::program_options;
 
-const string kVersion = "v1.0.13";
+const string kVersion = "v1.0.14";
 
 int main(int argc, char* argv[]) {
     po::options_description desc("[Broker Server] Usage");
