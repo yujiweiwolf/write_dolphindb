@@ -1,16 +1,17 @@
 data:
-  # 1 读mmap数据，2 读wal文件,配置目录, 3 读socket
-  type: 1
-  mmap: /home/work/sys/develop/feeder_huatai_insight/data/feed.stock.mem
+  # 1 读历史mmap, 可以设置多个目录，2 读wal文件,配置目录, 3 实时读mmap，此时mmap只能是单个目录
+  type: 2
+  mmap: ../data/iopv
+#  mmap: /home/work/sys/develop/feeder_dwzq_wind/data/feed.stock.mem
   #mmap: ../data/qts;../data/159919
-  wal_file: /home/work/sys/develop/feeder_huatai_insight_v_1.0/data
-  feed_gateway: tcp://127.0.0.1:8000
-  # 指定日期, 或设置为0  20250214
-  sub_date: 0
+  wal_file: ../data/wal
+  feed_gateway:
+  # 指定日期, 或设置为0  20260603
+  sub_date: 20260521
 
 dolphindb:
  #host: 192.168.101.237
-  host: 192.168.71.101
+  host: 192.168.50.101
   port: 8848
   userId: admin
   password: .123456

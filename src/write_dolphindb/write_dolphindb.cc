@@ -67,63 +67,7 @@ namespace co {
         } else if (type == 2) {
             ReadWal();
         } else if (type == 3) {
-            string feed_gateway = Config::Instance()->feed_gateway();;
-            co::FeedService feeder;
-            if (!feed_gateway.empty()) {
-                feeder.set_queue(feed_queue_);
-                feeder.Init(feed_gateway);
-                feeder.set_disable_index(true);
-                feeder.SubQTick("");
-                feeder.SubQOrder("");
-                feeder.SubQKnock("");
-                feeder.Start();
-                LOG_INFO << "start socket, feed_gateway: " << feed_gateway;
-                ReceiveSocket();
-            }
-        }
-    }
-
-    void DolphindbWriter::ReceiveSocket() {
-        std::string raw;
-        int64_t type = 0;
-        int tick_num = 0;
-        int order_num = 0;
-        int knock_num = 0;
-        while (true) {
-            if (!feed_queue_->Empty()) {
-                type = feed_queue_->Pop(&raw);
-                if (type != 0) {
-                    switch (type) {
-                        case kFBPrefixQTick: {
-                            tick_num++;
-                            if (tick_num % 10000 == 0) {
-                                LOG_INFO << "tick num: " << tick_num;
-                            }
-                            WriteQTick(raw);
-                            break;
-                        }
-                        case kFBPrefixQOrder: {
-                            order_num++;
-                            if (order_num % 10000 == 0) {
-                                LOG_INFO << "order num: " << order_num;
-                            }
-                            WriteQOrder(raw);
-                            break;
-                        }
-                        case kFBPrefixQKnock: {
-                            knock_num++;
-                            if (knock_num % 10000 == 0) {
-                                LOG_INFO << "knock num: " << knock_num;
-                            }
-                            WriteQKnock(raw);
-                            break;
-                        }
-                        default: {
-                            break;
-                        }
-                    }
-                }
-            }
+            RealTimeReadMMap();
         }
     }
 
@@ -203,6 +147,7 @@ namespace co {
                 x::MMapReader feeder_reader_;
                 feeder_reader_.Open(file, "data");
                 feeder_reader_.Open(file, "meta");
+                // feeder_reader_.Open("../data/iopv/feed.iopv.20260603_20260603162456174.mem");
                 const void* data = nullptr;
                 int tick_num = 0;
                 int order_num = 0;
@@ -284,6 +229,82 @@ namespace co {
             } else {
                 LOG_ERROR << file << " not exit";
             }
+        }
+    }
+
+    void DolphindbWriter::RealTimeReadMMap() {
+        string file = Config::Instance()->mmap();
+        if (fs::exists(file)) {
+            LOG_INFO << "mmap open file: " << file;
+            x::MMapReader feeder_reader_;
+            feeder_reader_.Open(file, "data");
+            feeder_reader_.Open(file, "meta");
+            const void* data = nullptr;
+            int tick_num = 0;
+            int order_num = 0;
+            int knock_num = 0;
+            int iopv_num = 0;
+            int64_t sub_date = x::RawDate();
+            while (true) {
+                int32_t type = feeder_reader_.Next(&data);
+                if (type == kMemTypeQTickHead) {
+                    if (tick_writer_) {
+                        MemQTickHead *contract = (MemQTickHead*) data;
+                        int64_t date = 0;
+                        if (contract->date != 0) {
+                            date = contract->date;
+                        } else {
+                            date = contract->timestamp / 1000000000LL;
+                        }
+                        if (date == sub_date) {
+                            tick_writer_->HandleQTickHead(contract);
+                        }
+                    }
+                } else if (type == kMemTypeQTickBody) {
+                    if (tick_writer_) {
+                        MemQTickBody *tick = (MemQTickBody*) data;
+                        int64_t date = tick->timestamp / 1000000000LL;
+                        if (date == sub_date) {
+                            tick_writer_->HandleTick(tick);
+                            tick_num++;
+                            if (tick_num % 10000 == 0) {
+                                LOG_INFO << "code: " << tick->code << ", timestamp: " << tick->timestamp
+                                << ", tick_num: " << tick_num << ", order_num: " << order_num
+                                << ", knock_num: " << knock_num << ", iopv_num: " << iopv_num;
+                            }
+                        }
+                    }
+                } else if (type == kMemTypeQOrder) {
+                    MemQOrder *order = (MemQOrder *) data;
+                    int64_t date = order->timestamp / 1000000000LL;
+                    if (order_writer_ && date == sub_date) {
+                        order_num++;
+                        order_writer_->WriteDate(order);
+                    }
+                } else if (type == kMemTypeQKnock) {
+                    MemQKnock *knock = (MemQKnock *) data;
+                    int64_t date = knock->timestamp / 1000000000LL;
+                    if (knock_writer_ && date == sub_date) {
+                        knock_num++;
+                        knock_writer_->WriteDate(knock);
+                    }
+                } else if (type == kMemTypeQEtfIopvHead) {
+                    MemQEtfIopvHead *head = (MemQEtfIopvHead *) data;
+                    int64_t date = head->timestamp / 1000000000LL;
+                    if (etfiopv_writer_ && date == sub_date) {
+                        etfiopv_writer_->HandleQTickHead(head);
+                    }
+                } else if (type == kMemTypeQEtfIopvBody) {
+                    MemQEtfIopvBody *body = (MemQEtfIopvBody *) data;
+                    int64_t date = body->timestamp / 1000000000LL;
+                    if (etfiopv_writer_ && date == sub_date) {
+                        etfiopv_writer_->WriteDate(body);
+                        iopv_num++;
+                    }
+                }
+            }
+        } else {
+            LOG_ERROR << file << " not exit";
         }
     }
 

@@ -30,7 +30,7 @@ namespace co {
     protected:
         void ReadMMap();
         void ReadWal();
-        void ReceiveSocket();
+        void RealTimeReadMMap();
         void WriteQTick(std::string& raw);
         void WriteQOrder(std::string& raw);
         void WriteQKnock(std::string& raw);

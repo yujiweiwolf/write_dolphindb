@@ -8,7 +8,6 @@ namespace co {
         virtual ~EtfIopvWriter() = default;
 
         void WriteDate(std::string& raw) {
-
         }
 
         void HandleQTickHead(MemQEtfIopvHead* data) {
@@ -80,22 +79,20 @@ namespace co {
         }
 
         TableSP createTable(MemQEtfIopvBody* data, MemQEtfIopvHead* head) {
-            vector<string> colNames = { "code","date","time","underlying_code",
-                                        "market","create_fee", "redeem_fee","position_ratio","dividend_ratio","unit_volume","pre_nav","pre_estimate_cash", "pre_cash_diff","pre_close_iopv",
-                                        "basket0","basket1","basket2","basket3","basket4","basket5","basket6","basket7","basket8","basket9",
-                                        "sum_create_volume","sum_redeem_volume","new_price","bp1", "ap1","new_iopv","bp1_iopv","ap1_iopv","mid_iopv","bp1_shift_iopv", "ap1_shift_iopv",
-                                        "bid_iopv0","bid_iopv1","bid_iopv2","bid_iopv3","bid_iopv4","bid_iopv5","bid_iopv6","bid_iopv7","bid_iopv8","bid_iopv9",
-                                        "ask_iopv0","ask_iopv1","ask_iopv2","ask_iopv3","ask_iopv4","ask_iopv5","ask_iopv6","ask_iopv7","ask_iopv8","ask_iopv9",
-                                        "non_must_limit_up_rate","non_must_limit_down_rate","non_must_suspension_rate","must_non_suspension_rate",
-                                        "create_stock_amendment_rate","redeem_stock_amendment_rate","deviate_valid","deviate_rate"};
+            vector<string> colNames = { "code","date","time","underlying_code","market","create_fee","redeem_fee","position_ratio","dividend_ratio","unit_volume","estimate_cash","pre_nav",
+                                        "pre_estimate_cash","pre_cash_diff","pre_close_iopv","local_must_amount","cross_must_amount","etf_type",
+                                        "sum_create_volume","sum_redeem_volume","new_price","bp1", "ap1","new_iopv","bp1_iopv","ap1_iopv","mid_iopv","bp1_shift_iopv","ap1_shift_iopv","fair_iopv",
+                                        "deviate_valid","deviate_rate","local_new_amount","local_bp1_amount","local_ap1_amount","cross_new_amount","cross_bp1_amount","cross_ap1_amount",
+                                        "non_must_limit_up_rate","non_must_limit_down_rate","non_must_suspension_rate","must_non_suspension_rate","create_stock_amendment_rate","redeem_stock_amendment_rate",
+                                        "local_fair_amount","cross_fair_amount","fair_bp1_iopv","fair_ap1_iopv"};
 
             vector<DATA_TYPE> colTypes = {DT_SYMBOL,DT_DATE,DT_TIME,DT_SYMBOL,
-                                          DT_LONG,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_LONG,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,
-                                          DT_LONG,DT_LONG,DT_LONG,DT_LONG,DT_LONG,DT_LONG,DT_LONG,DT_LONG,DT_LONG,DT_LONG,
-                                          DT_LONG,DT_LONG,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,
-                                          DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,
-                                          DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,
-                                          DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_LONG,DT_DOUBLE};
+                                          DT_LONG,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_LONG,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,
+                                          DT_DOUBLE,DT_DOUBLE,DT_LONG,
+                                          DT_LONG,DT_LONG,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,
+                                          DT_LONG,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,
+                                          DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,
+                                          DT_DOUBLE,DT_DOUBLE,DT_DOUBLE,DT_DOUBLE};
 
             int colNum = colNames.size(), rowNum = 1;
             ConstantSP table = Util::createTable(colNames, colTypes, rowNum, 100);
@@ -131,14 +128,14 @@ namespace co {
                 columnVecs[index++]->set(i, Util::createDouble(head->position_ratio));
                 columnVecs[index++]->set(i, Util::createDouble(head->dividend_ratio));
                 columnVecs[index++]->set(i, Util::createLong(head->unit_volume));
+                columnVecs[index++]->set(i, Util::createDouble(head->estimate_cash));
                 columnVecs[index++]->set(i, Util::createDouble(head->pre_nav));
                 columnVecs[index++]->set(i, Util::createDouble(head->pre_estimate_cash));
                 columnVecs[index++]->set(i, Util::createDouble(head->pre_cash_diff));
                 columnVecs[index++]->set(i, Util::createDouble(head->pre_close_iopv));
-
-                for (int j= 0; j < 10; j++) {
-                    columnVecs[index++]->set(i, Util::createLong(head->basket[j]));
-                }
+                columnVecs[index++]->set(i, Util::createDouble(head->local_must_amount));
+                columnVecs[index++]->set(i, Util::createDouble(head->cross_must_amount));
+                columnVecs[index++]->set(i, Util::createLong(head->etf_type));
 
                 columnVecs[index++]->set(i, Util::createLong(data->sum_create_volume));
                 columnVecs[index++]->set(i, Util::createLong(data->sum_redeem_volume));
@@ -151,13 +148,16 @@ namespace co {
                 columnVecs[index++]->set(i, Util::createDouble(data->mid_iopv));
                 columnVecs[index++]->set(i, Util::createDouble(data->bp1_shift_iopv));
                 columnVecs[index++]->set(i, Util::createDouble(data->ap1_shift_iopv));
+                columnVecs[index++]->set(i, Util::createDouble(data->fair_iopv));
 
-                for (int j= 0; j < 10; j++) {
-                    columnVecs[index++]->set(i, Util::createDouble(data->bid_iopv[j]));
-                }
-                for (int j= 0; j < 10; j++) {
-                    columnVecs[index++]->set(i, Util::createDouble(data->ask_iopv[j]));
-                }
+                columnVecs[index++]->set(i, Util::createLong(data->deviate_valid));
+                columnVecs[index++]->set(i, Util::createDouble(data->deviate_rate));
+                columnVecs[index++]->set(i, Util::createDouble(data->local_new_amount));
+                columnVecs[index++]->set(i, Util::createDouble(data->local_bp1_amount));
+                columnVecs[index++]->set(i, Util::createDouble(data->local_ap1_amount));
+                columnVecs[index++]->set(i, Util::createDouble(data->cross_new_amount));
+                columnVecs[index++]->set(i, Util::createDouble(data->cross_bp1_amount));
+                columnVecs[index++]->set(i, Util::createDouble(data->cross_ap1_amount));
 
                 columnVecs[index++]->set(i, Util::createDouble(data->non_must_limit_up_rate));
                 columnVecs[index++]->set(i, Util::createDouble(data->non_must_limit_down_rate));
@@ -165,8 +165,11 @@ namespace co {
                 columnVecs[index++]->set(i, Util::createDouble(data->must_non_suspension_rate));
                 columnVecs[index++]->set(i, Util::createDouble(data->create_stock_amendment_rate));
                 columnVecs[index++]->set(i, Util::createDouble(data->redeem_stock_amendment_rate));
-                columnVecs[index++]->set(i, Util::createLong(data->deviate_valid));
-                columnVecs[index++]->set(i, Util::createDouble(data->deviate_rate));
+
+                columnVecs[index++]->set(i, Util::createDouble(data->local_fair_amount));
+                columnVecs[index++]->set(i, Util::createDouble(data->cross_fair_amount));
+                columnVecs[index++]->set(i, Util::createDouble(data->fair_bp1_iopv));
+                columnVecs[index++]->set(i, Util::createDouble(data->fair_ap1_iopv));
             }
             return table;
         }
@@ -198,21 +201,14 @@ namespace co {
                     , Util::createDouble(head->position_ratio)
                     , Util::createDouble(head->dividend_ratio)
                     , Util::createLong(head->unit_volume)
+                    , Util::createDouble(head->estimate_cash)
                     , Util::createDouble(head->pre_nav)
                     , Util::createDouble(head->pre_estimate_cash)
                     , Util::createDouble(head->pre_cash_diff)
                     , Util::createDouble(head->pre_close_iopv)
-
-                    , Util::createLong(head->basket[0])
-                    , Util::createLong(head->basket[1])
-                    , Util::createLong(head->basket[2])
-                    , Util::createLong(head->basket[3])
-                    , Util::createLong(head->basket[4])
-                    , Util::createLong(head->basket[5])
-                    , Util::createLong(head->basket[6])
-                    , Util::createLong(head->basket[7])
-                    , Util::createLong(head->basket[8])
-                    , Util::createLong(head->basket[9])
+                    , Util::createDouble(head->local_must_amount)
+                    , Util::createDouble(head->cross_must_amount)
+                    , Util::createLong(head->etf_type)
 
                     , Util::createLong(data->sum_create_volume)
                     , Util::createLong(data->sum_redeem_volume)
@@ -225,28 +221,16 @@ namespace co {
                     , Util::createDouble(data->mid_iopv)
                     , Util::createDouble(data->bp1_shift_iopv)
                     , Util::createDouble(data->ap1_shift_iopv)
+                    , Util::createDouble(data->fair_iopv)
 
-                    , Util::createDouble(data->bid_iopv[0])
-                    , Util::createDouble(data->bid_iopv[1])
-                    , Util::createDouble(data->bid_iopv[2])
-                    , Util::createDouble(data->bid_iopv[3])
-                    , Util::createDouble(data->bid_iopv[4])
-                    , Util::createDouble(data->bid_iopv[5])
-                    , Util::createDouble(data->bid_iopv[6])
-                    , Util::createDouble(data->bid_iopv[7])
-                    , Util::createDouble(data->bid_iopv[8])
-                    , Util::createDouble(data->bid_iopv[9])
-
-                    , Util::createDouble(data->ask_iopv[0])
-                    , Util::createDouble(data->ask_iopv[1])
-                    , Util::createDouble(data->ask_iopv[2])
-                    , Util::createDouble(data->ask_iopv[3])
-                    , Util::createDouble(data->ask_iopv[4])
-                    , Util::createDouble(data->ask_iopv[5])
-                    , Util::createDouble(data->ask_iopv[6])
-                    , Util::createDouble(data->ask_iopv[7])
-                    , Util::createDouble(data->ask_iopv[8])
-                    , Util::createDouble(data->ask_iopv[9])
+                    ,Util::createLong(data->deviate_valid)
+                    ,Util::createDouble(data->deviate_rate)
+                    ,Util::createDouble(data->local_new_amount)
+                    ,Util::createDouble(data->local_bp1_amount)
+                    ,Util::createDouble(data->local_ap1_amount)
+                    ,Util::createDouble(data->cross_new_amount)
+                    ,Util::createDouble(data->cross_bp1_amount)
+                    ,Util::createDouble(data->cross_ap1_amount)
 
                     ,Util::createDouble(data->non_must_limit_up_rate)
                     ,Util::createDouble(data->non_must_limit_down_rate)
@@ -254,8 +238,11 @@ namespace co {
                     ,Util::createDouble(data->must_non_suspension_rate)
                     ,Util::createDouble(data->create_stock_amendment_rate)
                     ,Util::createDouble(data->redeem_stock_amendment_rate)
-                    ,Util::createLong(data->deviate_valid)
-                    ,Util::createDouble(data->deviate_rate)
+
+                    ,Util::createDouble(data->local_fair_amount)
+                    ,Util::createDouble(data->cross_fair_amount)
+                    ,Util::createDouble(data->fair_bp1_iopv)
+                    ,Util::createDouble(data->fair_ap1_iopv)
             );
         }
     private:

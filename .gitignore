@@ -28,3 +28,4 @@
 !lib/**/*.so
 
 cmake-build-debug/
+build/
